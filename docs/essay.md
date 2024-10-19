@@ -135,9 +135,15 @@ We say that $\pi$ is the **most granular generalization** of $p$ and $q$ iff $\p
 
 ## Rounding Errors
 
-When working with real world datasets we have to account for the accumulation of rounding errors when combining rates for partitions. Imagine that we have an interval and a rate of 0.53. If we extended the accuracy of the rate to four significant digits, we could find that the true rate was anything from 0.5250 to 0.5349. If we combine these rates 
+When working with real world datasets we have to account for the accumulation of rounding errors when combining rates for partitions. Imagine that we have an interval and a rate of 0.53. If we extended the accuracy of the rate to four significant digits, we could find that the true rate was anything from 0.5250 to 0.5349.
 
 ## Regression Estimates
+
+In this technical note, we've considered datasets that use different data stratifications and discussed ways to define new stratifications that we can use to combine frequencies and rates. This approach produces the most accurate results across composite datasets. However, this discussion would be incomplete without discussing the use of regression analysis to estimate rates across populations.
+
+Consider the case in which we have a set $s$ of entities of type $T$. $T$ in this case will represent people. We can stratify the people in $s$ using a partition $p$. For instance, we can stratify people by age where each age group corresponds to a five year interval. Significantly however we can gradually refine our partition by using a series of increasingly shorter intervals. For instance, we can refine $p$ into 1 year intervals, then 1 month intervals, then 1 day intervals, etc. Theoretically, we can continue this refinement process until we reach a limit of a continuous time distribution.
+
+Let's say that we have a set $s$ of people (entities of type $T$). We stratify this population by age using equal intervals (for example 1 year intervals) $p_i$ and then calculate the rates of some condition $f$ for each subgroup.
 
 ## Confidence Intervals
 
