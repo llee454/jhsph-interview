@@ -1,4 +1,4 @@
-<center><h1>Johns Hopkins School of Public Health: Sr. Programmer Analyst Coding Challenge</h1></center>
+<center><h1>Calculating Rate Ratios Across Disparate Datasets</h1></center>
 
 <center>Larry D. Lee Jr.</center>
 

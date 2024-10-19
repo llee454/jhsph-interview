@@ -1,0 +1,11 @@
+(executable
+ (name main)
+ (public_name interview)
+ (libraries
+    core
+    lib
+    eio_main
+  )
+  (preprocess (pps ppx_jane))
+  (modes exe)
+)
