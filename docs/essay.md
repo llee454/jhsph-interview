@@ -33,11 +33,7 @@ $$
 
 A **stratification** is a partition in which elements from $s$ are allocated to different subsets $p$ based some property value such as age.
 
-In a stratification we take a set of entities of type $T$, idenfity a property, such as age, that spans some domain, such as $\mathbb{R}^+$, partition that domain $p$, and then project entities into those partition sets. 
-
-The elements of this scheme are presented in the following diagram:
-
-**TODO**: create diagram
+In a stratification we take a set of entities of type $T$, idenfity a property, such as age, that spans some domain, such as $\mathbb{R}^+$, partition that domain $p$, and then project entities into those partition sets.
 
 ## Rates
 
