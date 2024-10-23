@@ -1,28 +1,11 @@
-README
-======
+JHSPH Interview Response Readme
+===============================
 
-This package contains the analysis code
+This package contains my (Larry Lee) response to the JHSPS Coding challenge.
 
-Initializing the Build Environment
-----------------------------------
+My response consists of two files.
 
-```
-cd analysis # enter the project root directory and run the following
-opam switch create . 5.2.0+options --no-install
-eval $(opam env)
-opam update
-opam upgrade
-dune build interview.opam # to generate OPAM package file
-opam install --deps-only . -y
-dune build
-dune runtest
-```
-
-Execution
----------
-
-Use the following command fo execute the main script which outputs the results of the analysis:
-
-```
-dune exec src/main.exe
-```
+- Interview.R
+  An R file that contains code used to answer the interview questions as well as a function that meets the challenge specification
+- docs/essay.pdf
+  A PDF file that gives the answers to the interview questions and explains my rationale.
