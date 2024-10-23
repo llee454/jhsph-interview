@@ -1,14 +1,24 @@
-<center><h1>JHSPH Interview Response</h1></center>
+<center><h1>Johns Hopkins School of Public Health Coding Challenge</h1></center>
 
 <center>Larry D. Lee Jr.</center>
 
 <center>October 18, 2024</center>
 
-> Abstract: This technical note answers the questions presented in JHSPH's Coding Challenge. In this note, I review the mathematical theory behind combining datasets that use different stratifications and present code that combines these datasets.
+> Abstract: This technical note answers the questions presented in Johns Hopkins School of Public Health's (JHSPH) Coding Challenge. In this note, I review the mathematical theory behind combining datasets that use different stratifications and present code that combines these datasets.
 
 # Introduction
 
-This technical note answers the questions presented in JHSPH's Coding Challenge. In this note, I review the mathematical theory behind combining datasets that use different stratifications and present code that combines these datasets.
+This technical note answers the questions presented in Johns Hopkins School of Public Health's (JHSPH) Coding Challenge. This coding challenge consisted of two parts. The challenge provided four datasets that described the age distribution of Baltimore City residents and the prevalence rates of Gonorrhea, HIV, and heroin use across different age intervals. The first part of the coding challenge asked the interviewee to answer the following questions using the datasets:
+
+> "Using these four datasets, calculate the following quantities, or if they cannot be calculated exactly, explain why
+> 1. The ratio of gonorrhea rate to HIV diagnosis rate among people ages 25-44, and among people ages 45 or greater, in 2020
+> 2. The ratio of heroin use rate to HIV diagnosis rate among people ages 12 and older in 2020"
+
+The second part asked the interviewee to write a function that: 
+
+> "... takes three datasets as inputs (two with rates per population and one with population) and returns the ratio of these rates by the most granular age brackets possible"
+
+In this note, I answer these questions and present R code that implements this function. Additionally, I review the mathematics behind data stratification and associated algorithms.
 
 # Mathematical Background
 
@@ -20,7 +30,7 @@ Let $s : set\ T$ represent a set of entities of type $T$. In general, $T$ can re
 
 ## Partitions
 
-A finite **partition** of a set $s$ is a finite set of sets $p : set\ (set\ T)$ such that $s = \bigcup_{i=1}^n p_i$ and $\forall i, j \in \mathbb{N}, i \neq j \implies p_i \cap p_j = \emptyset$ where $n = |p|$. A **partition function** $f : T \rightarrow \mathbb{N}$ is a function that accepts a value $s_i$ from $s$ and returns the index $j$ of the subset $p_j$ that contains $s_i$ in a partition $p$.
+A finite **partition** of a set $s$ is a finite set of $n$ sets $p : set\ (set\ T)$ such that $s = \bigcup_{i=1}^n p_i$ and $\forall i, j \in \mathbb{N}, i \neq j \implies p_i \cap p_j = \emptyset$. A **partition function** $f_p : T \rightarrow \mathbb{N}$ is a function that accepts a value $s_i$ from $s$ and returns the index $j$ of the subset $p_j$ that contains $s_i$ in a partition $p$.
 
 As a special case we will often consider contiguous clopen interval partitions (**CCIPs**) of the positive real number line $\mathbb{R}^+$.[^1] We will represent these partitions as a list of intervals in ascending order and will represent the type of such partitions as $[Interval]$. Note that there are no gaps between these intervals thus: 
 $$
@@ -31,9 +41,9 @@ $$
 
 ## Stratification
 
-A **stratification** is a partition in which elements from $s$ are allocated to different subsets $p$ based some property value such as age.
+A **stratification** is a partition $p$ of some set $A$ in which elements from $s$ are allocated to different sets in $p$ based some property value such as age. For this technical note, $A$ will always be the positive real number line $\mathbb{R}^+$.
 
-In a stratification we take a set of entities of type $T$, idenfity a property, such as age, that spans some domain, such as $\mathbb{R}^+$, partition that domain $p$, and then project entities into those partition sets.
+In a stratification we take a set of entities of type $T$, identify a property, such as age, that spans some domain, such as $\mathbb{R}^+$, partition that domain $p$, and then project entities into those partition sets.
 
 ## Rates
 
@@ -75,7 +85,7 @@ Notice that the rate ratio can only be defined when the rates given apply to the
 
 ## Refinement and Coarsening
 
-Let $p, q : set (set\ T)$ represent two partitions of a set $s$. We say that $q$ is a **refinement** of $p$ iff for every element $p_i$ in $p$ there exist one or more elements in $q$ that collectively represent a partition of $p$. In other words, there are one or more elements in $q$ whose union equals $p_i$.
+Let $p, q : set (set\ T)$ represent two partitions of a set $s$. We say that $q$ is a **refinement** of $p$ iff for every element $p_i$ in $p$ there exist one or more elements in $q$ that collectively represent a partition of $p_i$. In other words, there are one or more elements in $q$ whose union equals $p_i$.
 $$
 \begin{align*}
 \forall p_i \in p, \exists r \subseteq q, p_i = \bigcup r. 
@@ -95,15 +105,18 @@ Conversely, we say that $p$ **coarsens** $q$. We say that $q$ is **more granular
 
 ## Rates over Coarsening
 
-Let $p, \pi : [Interval]$ be two CCIPs where $\pi$ generalizes $p$. Let's assume furthermore that we have rates for some predicate $f$ over $p$. We can use (1) to calculate the corresponding rates of $f$ over $\pi$.
-
-If we know the proportion $prop (p_i) := |p_i|/|s|$ of entities in the underlying set $s$ that are grouped within each interval $p_i$, we can rewrite (1) as:
+Let $p, q : [Interval]$ be two CCIPs where $q$ coarsens $p$. Let's assume furthermore that we have rates for some predicate $f$ over $p$. We can use (1) to calculate the corresponding rates of $f$ over $q$. To do this, we apply the following algorithm. For every interval $q_i$ in $q$, identify the sublist of intervals $r_i$ in $p$ that refine $q_i$. Use (1) to calculate the rate of $f$ over $q_i$:
 $$
 \begin{align*}
-rate\ (f, \pi) = \sum_{i = 1}^n rate\ (f, p_i)\ prop\ (p_i).
+  rate\ (f, q_i) = \frac{\sum_{i=1}^n freq\ (f, r_i)}{|q_i|}.
 \end{align*}
 $$
-
+If we know the proportion $prop (r_i) := |r_i|/|q_i|$ of entities in the underlying set $q_i$ that are grouped within each interval $r_i$, we can rewrite this as:
+$$
+\begin{align*}
+rate\ (f, q_i) = \sum_{i = 1}^n rate\ (f, r_i)\ prop\ (r_i).
+\end{align*}
+$$
 ## Rate Ratios over Coarsening
 
 We can calculate the rate ratios over two partitions $p$ and $q$ when $q$ is a refinement of $p$. The rate ratios will be defined for elements (sets of $s$) defined by the less granular partition $p$. For every element $p_i$ in $p$, let $r_i$ represent $p_i$'s refinement in $q$. Then the risk ratio of $f$ and $g$ over $p$ is given by:
@@ -112,30 +125,29 @@ $$
 rateRatio (f, g, p_i, r_i) := \frac{rate\ (f, p_i)}{rate\ (g, r_i)} = \frac{freq\ (f, p_i)}{freq\ (g, r_i)}.
 \end{align*}
 $$
-
 ## Generalization
 
 Let's say that $p, q, \pi : [Interval]$ represent three CCIPs of $\mathbb{R}^+$. We say that $\pi$ **generalizes** $p$ and $q$ iff:
 $$
 \begin{align*}
-generalizes?\ (\pi, p, q) := refines? (\pi, p) \wedge refines?\ (\pi, q).
+generalizes?\ (\pi, p, q) := refines? (p, \pi) \wedge refines?\ (q, \pi).
 \end{align*}
 $$
-Notice that the intervals in $\pi$ start and end at boundary points shared by both $p$ and $q$.
-
 We say that $\pi$ is the **most granular generalization** of $p$ and $q$ iff $\pi$ refines every other generalization of $p$ and $q$. 
+
+We can easily prove that the intervals in $\pi$ start and end at boundary points shared by both $p$ and $q$. What's more, we can define an algorithm that accepts two arbitrary CCIPs and returns there most granular generalization. This algorithm is a scanning algorithm and runs in linear time. The `rebase` function defined in the code sample presented in Appendix 1 presents an implementation of this algorithm in R.
+
+## Incompatible Partitions
+
+Consider the case where we have two datasets that have been stratified using two partitions $p$ and $q$. Assume, furthermore that $p$ and $q$ have no common start and endpoints in common. In this instance, we say that $p$ and $q$ are **incompatible** as their generalization is the empty set $\empty$.
+
+In general, we cannot safely combine incompatible datasets. To see this consider the following scenario in which $p = [[0, 2]]$ and and $q = [[1, 2]]$. Assume that 100 people in $p_1$ have condition $x$ and that 50 people in $q_1$ have condition $y$. We cannot safely calculate the overlap between these two groups because we do not know if all of the people in $p_1$ with condition $x$ fall within the interval $[0, 1]$, $[1, 2]$, or are distributed between them. Thus, the overlap could be 0, 100%, or any value in between.
+
+If however, we can make additional assumptions about the underlying distribution of people across the domain partitioned by $p$ and $q$, such as assuming that the distribution is approximately uniform within each interval, we can use regression and interpolation techniques to estimate these overlaps. 
 
 ## Rounding Errors
 
-When working with real world datasets we have to account for the accumulation of rounding errors when combining rates for partitions. Imagine that we have an interval and a rate of 0.53. If we extended the accuracy of the rate to four significant digits, we could find that the true rate was anything from 0.5250 to 0.5349.
-
-## Regression Estimates
-
-In this technical note, we've considered datasets that use different data stratifications and discussed ways to define new stratifications that we can use to combine frequencies and rates. This approach produces the most accurate results across composite datasets. However, this discussion would be incomplete without discussing the use of regression analysis to estimate rates across populations.
-
-Consider the case in which we have a set $s$ of entities of type $T$. $T$ in this case will represent people. We can stratify the people in $s$ using a partition $p$. For instance, we can stratify people by age where each age group corresponds to a five year interval. Significantly however we can gradually refine our partition by using a series of increasingly shorter intervals. For instance, we can refine $p$ into 1 year intervals, then 1 month intervals, then 1 day intervals, etc. Theoretically, we can continue this refinement process until we reach a limit of a continuous time distribution.
-
-Let's say that we have a set $s$ of people (entities of type $T$). We stratify this population by age using equal intervals (for example 1 year intervals) $p_i$ and then calculate the rates of some condition $f$ for each subgroup.
+When working with real-world datasets we have to account for the accumulation of rounding errors when combining rates across partition subsets and intervals. Imagine that we have an interval and a rate of 0.53. If we extended the accuracy of the rate to four significant digits, we find that the true rate could have been any value between 0.5250 and 0.5349. In general, when we perform arithmetic operations over these estimates, our precision will degrade. 
 
 # Answers
 
@@ -145,7 +157,7 @@ The Interview challenge opens with the following questions:
 > 1. The ratio of gonorrhea rate to HIV diagnosis rate among people ages 25-44, and among people ages 45 or greater, in 2020
 > 2. The ratio of heroin use rate to HIV diagnosis rate among people ages 12 and older in 2020
 
-I've included a code package that includes code written in both R and OCaml to answer these questions. We can calculate the frequency of Gonorrhea and HIV for each of the age ranges included in their datasets. We can then calculate the sum of people in both datasets who have these conditions in the 25-44 age cohorts. Dividing these sums we find that:
+I've included a code package that includes code written in R to answer these questions. We can calculate the frequency of Gonorrhea and HIV for each of the age ranges included in the given datasets. We can then calculate the sum of people in both datasets who have these conditions in the 25-44 age cohorts. Dividing these sums we find that:
 
 1. (a) The ratio of gonorrhea rate to HIV diagnosis rate among people aged 25-44 is **19.8**.
 
