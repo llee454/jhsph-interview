@@ -89,32 +89,29 @@
 \def\fps@figure{htbp}
 \makeatother
 
-\title{Johns Hopkins School of Public Health: Sr. Programmer Analyst Coding Challenge}
-\date{October 18, 2024}
+\title{JHSPH Interview Response}
+\date{October 22, 2024}
 \author{Larry D. Lee Jr.}
 
 \begin{document}
 
 \maketitle
 
-\begin{abstract}
-In this brief technical note I present the mathematical theory
-behind ratio calculations across stratified datasets. I then apply this
-theory to work through an example dataset and close by presenting code
-samples in R and OCaml.
-\end{abstract}
+
+\begin{quote}
+Abstract: This technical note answers the questions presented in JHSPH's
+Coding Challenge. In this note, I review the mathematical theory behind
+combining datasets that use different stratifications and present code
+that combines these datasets.
+\end{quote}
 
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
 
-In real world analysis, we often have to combine and analyze datasets
-using different data formats. Frequently, when working with time series
-and population datasets, the information is grouped together using
-different stratifications. As a result it's important for us to develop
-techniques for combining discrepant datasets. In this technical note, I
-present the mathematics needed to combine these datasets and illustrate
-these mathematical techniques. In the last chapter, I present code
-samples in R and OCaml that perform these operations.
+This technical note answers the questions presented in JHSPH's Coding
+Challenge. In this note, I review the mathematical theory behind
+combining datasets that use different stratifications and present code
+that combines these datasets.
 
 \hypertarget{mathematical-background}{%
 \section{Mathematical Background}\label{mathematical-background}}
@@ -216,13 +213,15 @@ want to compare their rates. Their \textbf{rate ratio} over a set \(s\)
 is given by:
 
 \begin{align*}
-rateRatio (f, g, s) := \frac{rate\ (f, s)}{rate\ (g, s)}.
+rateRatio (f, g, s) := \frac{rate\ (f, s)}{rate\ (g, s)} = \frac{freq\ (f, s)}{freq\ (g, s)}.
 \end{align*}
 
 Notice that the rate ratio can only be defined when the rates given
 apply to the same underlying set. We say that two sets are
 \textbf{compatible} if they are equal. We can calculate risk ratios
-using rates over two compatible sets.
+using rates over two compatible sets. Also note that the risk ratio of
+\(f\) and \(g\) can be calculated by taking the ratio of their
+frequencies over \(s\).
 
 \hypertarget{refinement-and-coarsening}{%
 \subsection{Refinement and Coarsening}\label{refinement-and-coarsening}}
@@ -282,7 +281,7 @@ refinement in \(q\). Then the risk ratio of \(f\) and \(g\) over \(p\)
 is given by:
 
 \begin{align*}
-rateRatio (f, g, p_i, r_i) := \frac{rate\ (f, p_i)}{rate\ (g, r_i)}.
+rateRatio (f, g, p_i, r_i) := \frac{rate\ (f, p_i)}{rate\ (g, r_i)} = \frac{freq\ (f, p_i)}{freq\ (g, r_i)}.
 \end{align*}
 
 \hypertarget{generalization}{%
@@ -303,14 +302,6 @@ We say that \(\pi\) is the \textbf{most granular generalization} of
 \(p\) and \(q\) iff \(\pi\) refines every other generalization of \(p\)
 and \(q\).
 
-\hypertarget{rates-over-generalizations}{%
-\subsection{Rates over
-Generalizations}\label{rates-over-generalizations}}
-
-\textbf{TODO} revise the algorithm: intervals include proportions and
-rates. Generate both the generalized patitions and the pair of imputed
-rates.
-
 \hypertarget{rounding-errors}{%
 \subsection{Rounding Errors}\label{rounding-errors}}
 
@@ -318,140 +309,363 @@ When working with real world datasets we have to account for the
 accumulation of rounding errors when combining rates for partitions.
 Imagine that we have an interval and a rate of 0.53. If we extended the
 accuracy of the rate to four significant digits, we could find that the
-true rate was anything from 0.5250 to 0.5349. If we combine these rates
+true rate was anything from 0.5250 to 0.5349.
 
 \hypertarget{regression-estimates}{%
 \subsection{Regression Estimates}\label{regression-estimates}}
 
-\hypertarget{confidence-intervals}{%
-\subsection{Confidence Intervals}\label{confidence-intervals}}
+In this technical note, we've considered datasets that use different
+data stratifications and discussed ways to define new stratifications
+that we can use to combine frequencies and rates. This approach produces
+the most accurate results across composite datasets. However, this
+discussion would be incomplete without discussing the use of regression
+analysis to estimate rates across populations.
 
-\hypertarget{code-sample}{%
-\section{Code Sample}\label{code-sample}}
+Consider the case in which we have a set \(s\) of entities of type
+\(T\). \(T\) in this case will represent people. We can stratify the
+people in \(s\) using a partition \(p\). For instance, we can stratify
+people by age where each age group corresponds to a five year interval.
+Significantly however we can gradually refine our partition by using a
+series of increasingly shorter intervals. For instance, we can refine
+\(p\) into 1 year intervals, then 1 month intervals, then 1 day
+intervals, etc. Theoretically, we can continue this refinement process
+until we reach a limit of a continuous time distribution.
 
-The following algorithm accepts two partitions \(p\) and \(q\) and
-returns their most granular generalization.
+Let's say that we have a set \(s\) of people (entities of type \(T\)).
+We stratify this population by age using equal intervals (for example 1
+year intervals) \(p_i\) and then calculate the rates of some condition
+\(f\) for each subgroup.
+
+\hypertarget{answers}{%
+\section{Answers}\label{answers}}
+
+The Interview challenge opens with the following questions:
+
+\begin{quote}
+PART 1: Using these four datasets, calculate the following quantities,
+or if they cannot be calculated exactly, explain why
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  The ratio of gonorrhea rate to HIV diagnosis rate among people ages
+  25-44, and among people ages 45 or greater, in 2020
+\item
+  The ratio of heroin use rate to HIV diagnosis rate among people ages
+  12 and older in 2020
+\end{enumerate}
+\end{quote}
+
+I've included a code package that includes code written in both R and
+OCaml to answer these questions. We can calculate the frequency of
+Gonorrhea and HIV for each of the age ranges included in their datasets.
+We can then calculate the sum of people in both datasets who have these
+conditions in the 25-44 age cohorts. Dividing these sums we find that:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  (a) The ratio of gonorrhea rate to HIV diagnosis rate among people
+  aged 25-44 is \textbf{19.8}.
+\end{enumerate}
+
+Note that this calculation is approximate but accurate to 3 significant
+digits. We relied on underlying rate estimates for Gonorrhea and HIV.
+Both of these datasets rounded rate estimates to the nearest tenth of
+1/100,000th. Thus, given an estimate such as 25.7 per 100,000, the true
+rate is anywhere between 25.65 and 25.74. These errors can compound
+enough to shift our estimate but not by enough to alter the figure
+given. If we extend our estimate to four significant digits the
+potential error ranges from 19.82 to 19.84.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  (b) The ratio of gonorrhea rate to HIV diagnosis rate among people
+  aged 45 and older is \textbf{6.7}
+\end{enumerate}
+
+This calculation is accurate to the number of digits shown. However,
+given the rounding error implicit in the underlying rate estimates for
+Gonorrhea and HIV, the true ratio could range from 6.72 to 6.75.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  We cannot accurately estimate the ratio of heroin use rate to HIV
+  diagnosis rate for people ages 12 and older.
+\end{enumerate}
+
+The reason we cannot estimate this datum is because the age partitions
+used by the HIV rate dataset and the population age distribution are not
+compatible (as defined above). The best that we can do is to use some
+form of curve fitting or interpolation to estimate population density
+over age and then use this to estimate the number of people falling
+within the age ranges used by the heroin dataset.
+
+The interview challenge continues by giving a specification for a
+function that "... takes three datasets as inputs (two with rates per
+population and one with population) and returns the ratio of these rates
+by the most granular age brackets possible". The \texttt{getRateRatio}
+function defined in the code sample given in Appendix 1 implements this
+function specification.
+
+\hypertarget{appendix-1-r-code-sample}{%
+\section{Appendix 1: R Code Sample}\label{appendix-1-r-code-sample}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{-- Represents clopen intervals on R+}
-\KeywordTok{type} \DataTypeTok{Interval} \OtherTok{=} \DataTypeTok{Interval}\NormalTok{ \{}
-\OtherTok{  start ::} \DataTypeTok{Int}\NormalTok{,}
-\OtherTok{  end   ::} \DataTypeTok{Int}
+\CommentTok{# This package contains definitions that can be used to represent and combine}
+\CommentTok{# stratified datasets.}
+\CommentTok{#}
+\CommentTok{# It defines a datatype named interval that represents half open intervals of}
+\CommentTok{# the real number line. These intervals can be used to partition the real number}
+\CommentTok{# line into a finite number of intervals. A population can be divided across}
+\CommentTok{# these intervals and information about the subpopulation associated with each}
+\CommentTok{# group can be added.}
+\CommentTok{#}
+\CommentTok{# At the end of this file, we use these definitions to describe the prevalence}
+\CommentTok{# of HIV and gonorrhea across Baltimore City.}
+
+\NormalTok{UNBOUND=}\KeywordTok{quote}\NormalTok{(unbound)}
+
+\CommentTok{# Constructs an annotated interval}
+\CommentTok{# These objects represent the closed-open intervals of the postive real number}
+\CommentTok{# line.}
+\CommentTok{# Annotated partitions are represented by list of interval objects}
+\NormalTok{interval <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (info, start, }\DataTypeTok{end =}\NormalTok{ UNBOUND) \{}
+  \KeywordTok{list}\NormalTok{ (}\DataTypeTok{info=}\NormalTok{info, }\DataTypeTok{start=}\NormalTok{start, }\DataTypeTok{end=}\NormalTok{end)}
 \NormalTok{\}}
 
-\CommentTok{-- Accepts two interval partitions and returns their union - i.e. the most granualar partition that includes both.}
-\OtherTok{scan ::}\NormalTok{ [}\DataTypeTok{Interval}\NormalTok{] }\OtherTok{->}\NormalTok{ [}\DataTypeTok{Interval}\NormalTok{] }\OtherTok{->}\NormalTok{ [}\DataTypeTok{Interval}\NormalTok{]}
-\NormalTok{scan [] _ }\OtherTok{=}\NormalTok{ []}
-\NormalTok{scan _ [] }\OtherTok{=}\NormalTok{ []}
-\NormalTok{scan xs}\OperatorTok{@}\NormalTok{(x}\OperatorTok{:}\NormalTok{xs') ys}\OperatorTok{@}\NormalTok{(y}\OperatorTok{:}\NormalTok{ys')}
-  \OperatorTok{|}\NormalTok{ x}\OperatorTok{.}\NormalTok{start }\OtherTok{=}\NormalTok{ y}\OperatorTok{.}\NormalTok{start }\OtherTok{=}\NormalTok{ stretch x}\OperatorTok{.}\NormalTok{start xs ys}
-  \OperatorTok{|}\NormalTok{ x}\OperatorTok{.}\NormalTok{start }\OperatorTok{<}\NormalTok{ y}\OperatorTok{.}\NormalTok{start }\OtherTok{=}\NormalTok{ scan xs' ys}
-  \OperatorTok{|}\NormalTok{ x}\OperatorTok{.}\NormalTok{start }\OperatorTok{>}\NormalTok{ y}\OperatorTok{.}\NormalTok{start }\OtherTok{=}\NormalTok{ scan xs ys'}
-
-\CommentTok{-- stretches a current interval and then resumes scanning for common intervals.}
-\OtherTok{stretch ::} \DataTypeTok{Int} \OtherTok{->}\NormalTok{ [}\DataTypeTok{Interval}\NormalTok{] }\OtherTok{->}\NormalTok{ [}\DataTypeTok{Interval}\NormalTok{] }\OtherTok{->}\NormalTok{ [}\DataTypeTok{Interval}\NormalTok{]}
-\NormalTok{stretch _ [] _ }\OtherTok{=}\NormalTok{ []}
-\NormalTok{stretch _ _ [] }\OtherTok{=}\NormalTok{ []}
-\NormalTok{stretch start xs}\OperatorTok{@}\NormalTok{(x}\OperatorTok{:}\NormalTok{xs') ys}\OperatorTok{@}\NormalTok{(y}\OperatorTok{:}\NormalTok{ys')}
-  \OperatorTok{|}\NormalTok{ x}\OperatorTok{.}\NormalTok{end }\OtherTok{=}\NormalTok{ y}\OperatorTok{.}\NormalTok{end }\OtherTok{=}\NormalTok{ (}\DataTypeTok{Interval}\NormalTok{ start x}\OperatorTok{.}\NormalTok{end)}\OperatorTok{:}\NormalTok{(scan xs' ys')}
-  \OperatorTok{|}\NormalTok{ x}\OperatorTok{.}\NormalTok{end }\OperatorTok{<}\NormalTok{ y}\OperatorTok{.}\NormalTok{end }\OtherTok{=}\NormalTok{ stretch start xs' ys}
-  \OperatorTok{|}\NormalTok{ x}\OperatorTok{.}\NormalTok{end }\OperatorTok{>}\NormalTok{ y}\OperatorTok{.}\NormalTok{end }\OtherTok{=}\NormalTok{ stretch start xs ys'}
-\end{Highlighting}
-\end{Shaded}
-
-Notice that the algorithm runs in linear time.
-
-\hypertarget{illustrated-example}{%
-\section{Illustrated Example}\label{illustrated-example}}
-
-Let's focus specifically on the following scenario. We have a population
-of people represented by the set \(s\) and two datasets. \(D_0\) and
-\(D_1\). The first dataset stratifies the people in \(s\) by age using
-partition \(p\). The second stratifies people by age using different age
-ranges. Its partition is denoted by \(q\). Thus, every set in \(p\) and
-\(q\) corresponds to an interval on the positive real number line
-\(\mathbb{R}^+\). We do not require \(q\) to be a refinement of \(p\) or
-vice versa. Instead, given an interval \(p_i\) in \(p\), there may or
-may not exist one or more intervals in \(q\) that partitions \(p_i\) -
-i.e. there may or may not exist a refinement of \(p_i\) in \(q\). We
-want to identify the most granular partition \(\pi\) of \(\mathbb{R}^+\)
-that is compatible with both \(p\) and \(q\) and then calculate the rate
-ratios for every element in \(\pi\).
-
-\hypertarget{conclusion}{%
-\section{Conclusion}\label{conclusion}}
-
-\hypertarget{appendix-1-rates-over-generalized-partitions}{%
-\section{Appendix 1: Rates Over Generalized
-Partitions}\label{appendix-1-rates-over-generalized-partitions}}
-
-In the following code snippet, we present a set of functions that accept
-two partitions for which we have rates and returns the corresponding
-rates for their most granular generalization.
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{-- Represents information about entities in an interval}
-\KeywordTok{type} \DataTypeTok{Info}\NormalTok{ a }\OtherTok{=} \DataTypeTok{Info}\NormalTok{ \{}
-\OtherTok{  rate       ::}\NormalTok{ a,}
-\OtherTok{  proportion ::} \DataTypeTok{Float}
+\CommentTok{# Accepts two real numbers x and y who may be "unbound" and compares them.}
+\NormalTok{boundCompare <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (x, y) \{}
+  \ControlFlowTok{if}\NormalTok{ (x }\OperatorTok{==}\StringTok{ }\NormalTok{y) \{ }
+    \KeywordTok{return}\NormalTok{ (}\DecValTok{0}\NormalTok{)}
+\NormalTok{  \} }\ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (x }\OperatorTok{<}\StringTok{ }\NormalTok{y }\OperatorTok{||}\StringTok{ }\NormalTok{y }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND) \{}
+    \KeywordTok{return}\NormalTok{ (}\OperatorTok{-}\DecValTok{1}\NormalTok{)}
+\NormalTok{  \} }\ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (x }\OperatorTok{>}\StringTok{ }\NormalTok{y }\OperatorTok{||}\StringTok{ }\NormalTok{x }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND) \{}
+    \KeywordTok{return}\NormalTok{ (}\DecValTok{1}\NormalTok{)}
+\NormalTok{  \}}
 \NormalTok{\}}
 
-\CommentTok{-- Represents clopen intervals on R+}
-\KeywordTok{type} \DataTypeTok{Interval}\NormalTok{ a }\OtherTok{=} \DataTypeTok{Interval}\NormalTok{ \{}
-\OtherTok{  info  ::} \DataTypeTok{Info}\NormalTok{ a,}
-\OtherTok{  start ::} \DataTypeTok{Int}\NormalTok{,}
-\OtherTok{  end   ::} \DataTypeTok{Int}
+\CommentTok{# Accepts two real numbers x and y who may be "unbound" and returns true iff x}
+\CommentTok{# is less than or equal to y.}
+\NormalTok{boundLte <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (x, y) }\KeywordTok{boundCompare}\NormalTok{ (x, y) }\OperatorTok{<=}\StringTok{ }\DecValTok{0}
+
+\CommentTok{# Accepts two real numbers who may be "unbound" and returns the smaller of them.}
+\NormalTok{boundMin <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (x, y) \{}
+  \ControlFlowTok{if}\NormalTok{ (x }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND) \{}
+\NormalTok{    y}
+\NormalTok{  \} }\ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (y }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND) \{}
+\NormalTok{    x}
+\NormalTok{  \} }\ControlFlowTok{else}\NormalTok{ \{}
+    \KeywordTok{min}\NormalTok{ (x, y)}
+\NormalTok{  \}}
 \NormalTok{\}}
 
-\CommentTok{-- Accepts two interval partitions and returns their union - i.e. the most granualar partition that includes both.}
-\OtherTok{scan ::}\NormalTok{ [}\DataTypeTok{Interval} \DataTypeTok{Float}\NormalTok{] }\OtherTok{->}\NormalTok{ [}\DataTypeTok{Interval} \DataTypeTok{Float}\NormalTok{] }\OtherTok{->}\NormalTok{ [}\DataTypeTok{Interval}\NormalTok{ (}\DataTypeTok{Float}\NormalTok{, }\DataTypeTok{Float}\NormalTok{)]}
-\NormalTok{scan [] _ }\OtherTok{=}\NormalTok{ []}
-\NormalTok{scan _ [] }\OtherTok{=}\NormalTok{ []}
-\NormalTok{scan xs}\OperatorTok{@}\NormalTok{(x}\OperatorTok{:}\NormalTok{xs') ys}\OperatorTok{@}\NormalTok{(y}\OperatorTok{:}\NormalTok{ys')}
-  \OperatorTok{|}\NormalTok{ x}\OperatorTok{.}\NormalTok{start }\OtherTok{=}\NormalTok{ y}\OperatorTok{.}\NormalTok{start }\OtherTok{=}\NormalTok{ stretch x}\OperatorTok{.}\NormalTok{start (}\DataTypeTok{Info} \DecValTok{0} \DecValTok{0}\NormalTok{) xs ys}
-  \OperatorTok{|}\NormalTok{ x}\OperatorTok{.}\NormalTok{start }\OperatorTok{<}\NormalTok{ y}\OperatorTok{.}\NormalTok{start }\OtherTok{=}\NormalTok{ scan xs' ys}
-  \OperatorTok{|}\NormalTok{ x}\OperatorTok{.}\NormalTok{start }\OperatorTok{>}\NormalTok{ y}\OperatorTok{.}\NormalTok{start }\OtherTok{=}\NormalTok{ scan xs ys'}
-
-\CommentTok{-- stretches a current interval and then resumes scanning for common intervals.}
-\OtherTok{stretch ::} \DataTypeTok{Int} \OtherTok{->} \DataTypeTok{Info}\NormalTok{ (}\DataTypeTok{Float}\NormalTok{, }\DataTypeTok{Float}\NormalTok{) }\OtherTok{->}\NormalTok{ [}\DataTypeTok{Interval} \DataTypeTok{Float}\NormalTok{] }\OtherTok{->}\NormalTok{ [}\DataTypeTok{Interval} \DataTypeTok{Float}\NormalTok{] }\OtherTok{->}\NormalTok{ [}\DataTypeTok{Interval}\NormalTok{ (}\DataTypeTok{Float}\NormalTok{, }\DataTypeTok{Float}\NormalTok{)]}
-\NormalTok{stretch _ _ [] _ }\OtherTok{=}\NormalTok{ []}
-\NormalTok{stretch _ _ _ [] }\OtherTok{=}\NormalTok{ []}
-\NormalTok{stretch start info xs}\OperatorTok{@}\NormalTok{(x}\OperatorTok{:}\NormalTok{xs') ys}\OperatorTok{@}\NormalTok{(y}\OperatorTok{:}\NormalTok{ys')}
-  \OperatorTok{|}\NormalTok{ x}\OperatorTok{.}\NormalTok{end }\OtherTok{=}\NormalTok{ y}\OperatorTok{.}\NormalTok{end }\OtherTok{=}
-\NormalTok{    (}\DataTypeTok{Interval}
-\NormalTok{      \{}
-\NormalTok{        rate }\OtherTok{=}\NormalTok{ (}
-          \FunctionTok{fst}\NormalTok{ info}\OperatorTok{.}\NormalTok{rate }\OperatorTok{+}\NormalTok{ x}\OperatorTok{.}\NormalTok{info}\OperatorTok{.}\NormalTok{rate }\OperatorTok{*}\NormalTok{ x}\OperatorTok{.}\NormalTok{info}\OperatorTok{.}\NormalTok{proportion,}
-          \FunctionTok{snd}\NormalTok{ info}\OperatorTok{.}\NormalTok{rate }\OperatorTok{+}\NormalTok{ y}\OperatorTok{.}\NormalTok{info}\OperatorTok{.}\NormalTok{rate }\OperatorTok{*}\NormalTok{ y}\OperatorTok{.}\NormalTok{info}\OperatorTok{.}\NormalTok{proportion}
-\NormalTok{        ),}
-\NormalTok{        proportion }\OtherTok{=}\NormalTok{ info}\OperatorTok{.}\NormalTok{proportion }\OperatorTok{+}\NormalTok{ x}\OperatorTok{.}\NormalTok{info}\OperatorTok{.}\NormalTok{proportion}
+\CommentTok{# Accepts three arguments:}
+\CommentTok{#}
+\CommentTok{# @param f a function that accepts two contiguous series of annotated intervals}
+\CommentTok{#   that span the same range of the positive real number line and merges them}
+\CommentTok{# @param xs, an annotated partition}
+\CommentTok{# @param ys, an annotated partition}
+\CommentTok{#}
+\CommentTok{# And returns a new annotated partition based on the most granular intervals}
+\CommentTok{# spanned by xs and ys whose annotations are derived from f.}
+\NormalTok{rebase <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (f, xs, ys) \{}
+\NormalTok{  zs <-}\StringTok{ }\KeywordTok{list}\NormalTok{ ()}
+\NormalTok{  i <-}\StringTok{ }\DecValTok{1}
+\NormalTok{  j <-}\StringTok{ }\DecValTok{1}
+  \ControlFlowTok{while}\NormalTok{ (i }\OperatorTok{<=}\StringTok{ }\KeywordTok{length}\NormalTok{ (xs) }\OperatorTok{&&}\StringTok{ }\NormalTok{j }\OperatorTok{<=}\StringTok{ }\KeywordTok{length}\NormalTok{ (ys)) \{}
+\NormalTok{    x <-}\StringTok{ }\NormalTok{xs[[i]]}
+\NormalTok{    y <-}\StringTok{ }\NormalTok{ys[[j]]}
+    \ControlFlowTok{if}\NormalTok{ (x}\OperatorTok{$}\NormalTok{start }\OperatorTok{==}\StringTok{ }\NormalTok{y}\OperatorTok{$}\NormalTok{start) \{}
+\NormalTok{      xInfos <-}\StringTok{ }\KeywordTok{c}\NormalTok{ ()}
+\NormalTok{      yInfos <-}\StringTok{ }\KeywordTok{c}\NormalTok{ ()}
+\NormalTok{      start <-}\StringTok{ }\NormalTok{x}\OperatorTok{$}\NormalTok{start}
+      \ControlFlowTok{while}\NormalTok{ (i }\OperatorTok{<=}\StringTok{ }\KeywordTok{length}\NormalTok{ (xs) }\OperatorTok{&&}\StringTok{ }\NormalTok{j }\OperatorTok{<=}\StringTok{ }\KeywordTok{length}\NormalTok{ (ys)) \{}
+\NormalTok{        x <-}\StringTok{ }\NormalTok{xs[[i]]}
+\NormalTok{        y <-}\StringTok{ }\NormalTok{ys[[j]]}
+        \ControlFlowTok{if}\NormalTok{ (}
+          \KeywordTok{boundCompare}\NormalTok{ (x}\OperatorTok{$}\NormalTok{end, y}\OperatorTok{$}\NormalTok{end) }\OperatorTok{==}\StringTok{ }\DecValTok{0} \OperatorTok{||}
+\StringTok{          }\NormalTok{(y}\OperatorTok{$}\NormalTok{end }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND }\OperatorTok{&&}\StringTok{ }\NormalTok{i }\OperatorTok{==}\StringTok{ }\KeywordTok{length}\NormalTok{ (xs)) }\OperatorTok{||}
+\StringTok{          }\NormalTok{(x}\OperatorTok{$}\NormalTok{end }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND }\OperatorTok{&&}\StringTok{ }\NormalTok{j }\OperatorTok{==}\StringTok{ }\KeywordTok{length}\NormalTok{ (ys))}
+\NormalTok{        ) \{}
+\NormalTok{          zs <-}\StringTok{ }\KeywordTok{append}\NormalTok{ (zs,}
+            \KeywordTok{list}\NormalTok{ (}\KeywordTok{interval}\NormalTok{ (}
+              \DataTypeTok{info=}\KeywordTok{f}\NormalTok{ (}
+                \KeywordTok{c}\NormalTok{ (xInfos, x}\OperatorTok{$}\NormalTok{info),}
+                \KeywordTok{c}\NormalTok{ (yInfos, y}\OperatorTok{$}\NormalTok{info)}
+\NormalTok{              ),}
+              \DataTypeTok{start=}\NormalTok{start,}
+              \DataTypeTok{end=}\KeywordTok{boundMin}\NormalTok{ (x}\OperatorTok{$}\NormalTok{end, y}\OperatorTok{$}\NormalTok{end)}
+\NormalTok{          )))}
+\NormalTok{          i <-}\StringTok{ }\NormalTok{i }\OperatorTok{+}\StringTok{ }\DecValTok{1}
+\NormalTok{          j <-}\StringTok{ }\NormalTok{j }\OperatorTok{+}\StringTok{ }\DecValTok{1}
+          \ControlFlowTok{break}
+\NormalTok{        \} }\ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (}\KeywordTok{boundCompare}\NormalTok{ (x}\OperatorTok{$}\NormalTok{end, y}\OperatorTok{$}\NormalTok{end) }\OperatorTok{==}\StringTok{ }\DecValTok{-1}\NormalTok{) \{}
+\NormalTok{          xInfos <-}\StringTok{ }\KeywordTok{c}\NormalTok{ (xInfos, x}\OperatorTok{$}\NormalTok{info)}
+\NormalTok{          i <-}\StringTok{ }\NormalTok{i }\OperatorTok{+}\StringTok{ }\DecValTok{1}
+\NormalTok{        \} }\ControlFlowTok{else}\NormalTok{ \{ }\CommentTok{# x$end > y$end}
+\NormalTok{          yInfos <-}\StringTok{ }\KeywordTok{c}\NormalTok{ (yInfos, y}\OperatorTok{$}\NormalTok{info)}
+\NormalTok{          j <-}\StringTok{ }\NormalTok{j }\OperatorTok{+}\StringTok{ }\DecValTok{1}
+\NormalTok{        \}}
 \NormalTok{      \}}
-\NormalTok{      start x}\OperatorTok{.}\NormalTok{end)}\OperatorTok{:}
-\NormalTok{    (scan xs' ys')}
-  \OperatorTok{|}\NormalTok{ x}\OperatorTok{.}\NormalTok{end }\OperatorTok{<}\NormalTok{ y}\OperatorTok{.}\NormalTok{end }\OtherTok{=}\NormalTok{ stretch start}
-\NormalTok{    \{}
-\NormalTok{      rate }\OtherTok{=}\NormalTok{ (}
-        \FunctionTok{fst}\NormalTok{ info}\OperatorTok{.}\NormalTok{rate }\OperatorTok{+}\NormalTok{ x}\OperatorTok{.}\NormalTok{info}\OperatorTok{.}\NormalTok{rate }\OperatorTok{*}\NormalTok{ x}\OperatorTok{.}\NormalTok{info}\OperatorTok{.}\NormalTok{proportion,}
-        \FunctionTok{snd}\NormalTok{ info}\OperatorTok{.}\NormalTok{rate}
-\NormalTok{      ),}
-\NormalTok{      proportion }\OtherTok{=}\NormalTok{ info}\OperatorTok{.}\NormalTok{proportion }\OperatorTok{+}\NormalTok{ x}\OperatorTok{.}\NormalTok{info}\OperatorTok{.}\NormalTok{proportion}
+\NormalTok{    \} }\ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (x}\OperatorTok{$}\NormalTok{start }\OperatorTok{<}\StringTok{ }\NormalTok{y}\OperatorTok{$}\NormalTok{start) \{}
+\NormalTok{      i <-}\StringTok{ }\NormalTok{i }\OperatorTok{+}\StringTok{ }\DecValTok{1}
+\NormalTok{    \} }\ControlFlowTok{else}\NormalTok{ \{ }\CommentTok{# x$start > y$start}
+\NormalTok{      j <-}\StringTok{ }\NormalTok{j }\OperatorTok{+}\StringTok{ }\DecValTok{1}
 \NormalTok{    \}}
-\NormalTok{    xs' ys}
-  \OperatorTok{|}\NormalTok{ x}\OperatorTok{.}\NormalTok{end }\OperatorTok{>}\NormalTok{ y}\OperatorTok{.}\NormalTok{end }\OtherTok{=}\NormalTok{ stretch start}
-\NormalTok{    \{}
-\NormalTok{      rate }\OtherTok{=}\NormalTok{ (}
-        \FunctionTok{fst}\NormalTok{ info}\OperatorTok{.}\NormalTok{rate,}
-        \FunctionTok{snd}\NormalTok{ info}\OperatorTok{.}\NormalTok{rate }\OperatorTok{+}\NormalTok{ y}\OperatorTok{.}\NormalTok{info}\OperatorTok{.}\NormalTok{rate }\OperatorTok{+}\NormalTok{ y}\OperatorTok{.}\NormalTok{info}\OperatorTok{.}\NormalTok{proportion}
-\NormalTok{      ),}
-\NormalTok{      proportion }\OtherTok{=}\NormalTok{ info}\OperatorTok{.}\NormalTok{proportion}
-\NormalTok{    \}}
-\NormalTok{    info xs ys'}
+\NormalTok{  \}}
+\NormalTok{  zs}
+\NormalTok{\}}
 
-\CommentTok{-- Accepts two interval partitions and returns the rate ratios for their generalized partion.}
-\OtherTok{getRateRatios ::}\NormalTok{ [}\DataTypeTok{Interval} \DataTypeTok{Float}\NormalTok{] }\OtherTok{->}\NormalTok{ [}\DataTypeTok{Interval} \DataTypeTok{Float}\NormalTok{] }\OtherTok{->}\NormalTok{ [}\DataTypeTok{Interval} \DataTypeTok{Float}\NormalTok{]}
-\NormalTok{getRateRatios p q }\OtherTok{=} \FunctionTok{map}\NormalTok{ (\textbackslash{}x }\OtherTok{->}\NormalTok{ x \{info }\OtherTok{=}\NormalTok{ (}\FunctionTok{fst}\NormalTok{ x}\OperatorTok{.}\NormalTok{info)}\OperatorTok{/}\NormalTok{(}\FunctionTok{snd}\NormalTok{ x}\OperatorTok{.}\NormalTok{info)\}) }\OperatorTok{$}\NormalTok{ scan p q }
+\CommentTok{# Accepts two partitions:}
+\CommentTok{# @param ps a partition that represents the number of people in a population who}
+\CommentTok{#   fall within a contiguous set of age ranges}
+\CommentTok{# @param rs a partition that represents the proportion of people within a}
+\CommentTok{#   contiguous set of age ranges who have some condition}
+\CommentTok{# and returns a partition that gives the absolute number of people who have the}
+\CommentTok{# condition within the most granular set of age ranges spanned by both}
+\CommentTok{# ps and rs.}
+\CommentTok{# @warn }
+\NormalTok{getFrequency <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (ps, rs) \{}
+  \KeywordTok{rebase}\NormalTok{ (}
+    \ControlFlowTok{function}\NormalTok{ (sizes, rates) \{}
+      \ControlFlowTok{if}\NormalTok{ (}\KeywordTok{length}\NormalTok{ (rates) }\OperatorTok{!=}\StringTok{ }\DecValTok{1}\NormalTok{) \{}
+        \KeywordTok{stop}\NormalTok{ (}\StringTok{"Error: the population partition is not a }\CharTok{\textbackslash{}"}\StringTok{refinement}\CharTok{\textbackslash{}"}\StringTok{ of the rate partition"}\NormalTok{)}
+\NormalTok{      \}}
+\NormalTok{      rates[}\DecValTok{1}\NormalTok{]}\OperatorTok{*}\KeywordTok{sum}\NormalTok{ (sizes)}
+\NormalTok{    \}, ps, rs}
+\NormalTok{  )}
+\NormalTok{\}}
+
+\CommentTok{# Accepts three arguments:}
+\CommentTok{# @start the age range lower bound}
+\CommentTok{# @end the age range upper bound}
+\CommentTok{# @freqs the number of people who have a given condition for a set of age ranges}
+\CommentTok{# and returns the total number of people who have the given condition between}
+\CommentTok{# the start and end age range (inclusive).}
+\NormalTok{getFreqSum <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (start, end, freqs) \{}
+\NormalTok{  sum <-}\StringTok{ }\DecValTok{0}
+  \ControlFlowTok{for}\NormalTok{ (freq }\ControlFlowTok{in}\NormalTok{ freqs) \{}
+    \ControlFlowTok{if}\NormalTok{ (start }\OperatorTok{<=}\StringTok{ }\NormalTok{freq}\OperatorTok{$}\NormalTok{start }\OperatorTok{&&}\StringTok{ }\KeywordTok{boundLte}\NormalTok{ (freq}\OperatorTok{$}\NormalTok{end, end)) \{}
+\NormalTok{      sum <-}\StringTok{ }\NormalTok{sum }\OperatorTok{+}\StringTok{ }\NormalTok{freq}\OperatorTok{$}\NormalTok{info}
+\NormalTok{    \}}
+\NormalTok{  \}}
+\NormalTok{  sum}
+\NormalTok{\}}
+
+\CommentTok{# Accepts two partitions:}
+\CommentTok{# @param xs a partition that gives the number of people within a contiguous set}
+\CommentTok{#   of age ranges who have condition x}
+\CommentTok{# @param ys a partition that gives the number of people within a contiguous set}
+\CommentTok{#   of age ranges who have condition y}
+\CommentTok{# and returns the rate ratios of the two conditions over the most granular}
+\CommentTok{# partition spanned by both xs and ys.}
+\CommentTok{# Note that xs and ys do not have use the same partition intervals.}
+\NormalTok{getFreqRateRatio <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (xs, ys) \{}
+  \KeywordTok{rebase}\NormalTok{ (}
+    \ControlFlowTok{function}\NormalTok{ (freqs0, freqs1) \{}
+      \KeywordTok{sum}\NormalTok{ (freqs0)}\OperatorTok{/}\KeywordTok{sum}\NormalTok{ (freqs1)}
+\NormalTok{    \}, xs, ys}
+\NormalTok{  )}
+\NormalTok{\}}
+
+\CommentTok{# Accepts three partitions:}
+\CommentTok{# @param ps a partition that gives the number of people who fall into a}
+\CommentTok{#   contiguous set of real intervals}
+\CommentTok{# @param xs a partition that gives the proportion of people within a range of}
+\CommentTok{#   intervals who have a condition x}
+\CommentTok{# @param ys a partition that gives the proportion of people within a range of}
+\CommentTok{#   intervals who have a condition y}
+\CommentTok{# and returns the rate ratio of the number of people who have condition x and y}
+\CommentTok{# over the most granular common partition that spans xs and ys.}
+\NormalTok{getRateRatio <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (ps, xs, ys) \{}
+\NormalTok{  xFreq <-}\StringTok{ }\KeywordTok{getFrequency}\NormalTok{ (ps, xs)}
+\NormalTok{  yFreq <-}\StringTok{ }\KeywordTok{getFrequency}\NormalTok{ (ps, ys)}
+  \KeywordTok{getFreqRateRatio}\NormalTok{ (xFreq, yFreq)}
+\NormalTok{\}}
+
+\CommentTok{# A partition listing the number of Baltimore residents who's ages fall within}
+\CommentTok{# a contiguous set of age ranges.}
+\NormalTok{population =}\StringTok{ }\KeywordTok{list}\NormalTok{ (}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{36355}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{4}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{33773}\NormalTok{, }\DecValTok{5}\NormalTok{, }\DecValTok{9}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{33590}\NormalTok{, }\DecValTok{10}\NormalTok{, }\DecValTok{14}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{33872}\NormalTok{, }\DecValTok{15}\NormalTok{, }\DecValTok{19}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{37183}\NormalTok{, }\DecValTok{20}\NormalTok{, }\DecValTok{24}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{53357}\NormalTok{, }\DecValTok{25}\NormalTok{, }\DecValTok{29}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{54804}\NormalTok{, }\DecValTok{30}\NormalTok{, }\DecValTok{34}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{43408}\NormalTok{, }\DecValTok{35}\NormalTok{, }\DecValTok{39}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{34271}\NormalTok{, }\DecValTok{40}\NormalTok{, }\DecValTok{44}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{30273}\NormalTok{, }\DecValTok{45}\NormalTok{, }\DecValTok{49}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{33423}\NormalTok{, }\DecValTok{50}\NormalTok{, }\DecValTok{54}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{37639}\NormalTok{, }\DecValTok{55}\NormalTok{, }\DecValTok{59}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{36895}\NormalTok{, }\DecValTok{60}\NormalTok{, }\DecValTok{64}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{29868}\NormalTok{, }\DecValTok{65}\NormalTok{, }\DecValTok{69}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{22486}\NormalTok{, }\DecValTok{70}\NormalTok{, }\DecValTok{74}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{13910}\NormalTok{, }\DecValTok{75}\NormalTok{, }\DecValTok{79}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{8977}\NormalTok{, }\DecValTok{80}\NormalTok{, }\DecValTok{84}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{9073}\NormalTok{, }\DecValTok{85}\NormalTok{)}
+\NormalTok{)}
+
+\CommentTok{# A partition listing the rates of HIV amongst Baltimore residents falling}
+\CommentTok{# within certain age ranges.}
+\NormalTok{hivRates =}\StringTok{ }\KeywordTok{list}\NormalTok{ (}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{45.6e-5}\NormalTok{, }\DecValTok{13}\NormalTok{, }\DecValTok{24}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{53.6e-5}\NormalTok{, }\DecValTok{25}\NormalTok{, }\DecValTok{34}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{46.6e-5}\NormalTok{, }\DecValTok{35}\NormalTok{, }\DecValTok{44}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{26.7e-5}\NormalTok{, }\DecValTok{45}\NormalTok{, }\DecValTok{54}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{5.4e-5}\NormalTok{, }\DecValTok{55}\NormalTok{, }\DecValTok{64}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{30.4e-5}\NormalTok{, }\DecValTok{65}\NormalTok{)}
+\NormalTok{)}
+
+\CommentTok{#  A partition list the rates of Gonorrhea amongst Baltimore residents falling}
+\CommentTok{# within certain age ranges.}
+\NormalTok{gonorrheaRates =}\StringTok{ }\KeywordTok{list}\NormalTok{ (}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{25.7e-5}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{14}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{2021.6e-5}\NormalTok{, }\DecValTok{15}\NormalTok{, }\DecValTok{19}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{2647.6e-5}\NormalTok{, }\DecValTok{20}\NormalTok{, }\DecValTok{24}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{1477.8e-5}\NormalTok{, }\DecValTok{25}\NormalTok{, }\DecValTok{29}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{1047.3e-5}\NormalTok{, }\DecValTok{30}\NormalTok{, }\DecValTok{34}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{773.0e-5}\NormalTok{, }\DecValTok{35}\NormalTok{, }\DecValTok{39}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{490.3e-5}\NormalTok{, }\DecValTok{40}\NormalTok{, }\DecValTok{44}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{298.6e-5}\NormalTok{, }\DecValTok{45}\NormalTok{, }\DecValTok{54}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{139.5e-5}\NormalTok{, }\DecValTok{55}\NormalTok{, }\DecValTok{64}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{23.6e-5}\NormalTok{, }\DecValTok{65}\NormalTok{)}
+\NormalTok{)}
+
+\CommentTok{# A partition listing the rates of heroin use amongst Baltimore residents}
+\CommentTok{# falling within certain age ranges}
+\CommentTok{# Note: The handout appears to have a typo in which heroin usage rates are}
+\CommentTok{# reported as "rates per 100,000"}
+\NormalTok{heroinRates =}\StringTok{ }\KeywordTok{list}\NormalTok{ (}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{0.00112}\NormalTok{, }\DecValTok{12}\NormalTok{, }\DecValTok{17}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{0.005426598}\NormalTok{, }\DecValTok{18}\NormalTok{, }\DecValTok{25}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\FloatTok{0.009849983}\NormalTok{, }\DecValTok{26}\NormalTok{)}
+\NormalTok{)}
+
+\CommentTok{# The number of people within certain age ranges who have HIV }
+\NormalTok{hivFreq =}\StringTok{ }\KeywordTok{getFrequency}\NormalTok{ (population, hivRates)}
+
+\CommentTok{# The number of people within certain age ranges who have Gonorrhea}
+\NormalTok{gonorrheaFreq =}\StringTok{ }\KeywordTok{getFrequency}\NormalTok{ (population, gonorrheaRates)}
+
+\CommentTok{# The number of people within certain age ranges who use heroin}
+\NormalTok{heroinFreq =}\StringTok{ }\KeywordTok{getFrequency}\NormalTok{ (population, heroinRates)}
+
+\CommentTok{# The rate ratio of gonorrhea and HIV for people aged 25 to 44}
+\CommentTok{# Note: the answer to question 1.(a)}
+\NormalTok{gonorrheaHivFreq2544 =}
+\StringTok{  }\KeywordTok{getFreqSum}\NormalTok{ (}\DecValTok{25}\NormalTok{, }\DecValTok{44}\NormalTok{, gonorrheaFreq)}\OperatorTok{/}
+\StringTok{  }\KeywordTok{getFreqSum}\NormalTok{ (}\DecValTok{25}\NormalTok{, }\DecValTok{44}\NormalTok{, hivFreq)}
+
+\CommentTok{# The rate ratio of gonorrhea and HIV for people aged 45 and older}
+\CommentTok{# Note: the answer to question 1.(b)}
+\NormalTok{gonorrheaHivfreq =}
+\StringTok{  }\KeywordTok{getFreqSum}\NormalTok{ (}\DecValTok{45}\NormalTok{, UNBOUND, gonorrheaFreq)}\OperatorTok{/}
+\StringTok{  }\KeywordTok{getFreqSum}\NormalTok{ (}\DecValTok{45}\NormalTok{, UNBOUND, hivFreq)}
 \end{Highlighting}
 \end{Shaded}
 
