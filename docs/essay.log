@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2024.3.17)  23 OCT 2024 09:11
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2024.3.17)  23 OCT 2024 11:32
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -473,67 +473,77 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
-)
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 125.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 125.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 125.
- [1
+) [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5]
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 4
-05.
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10> on input line 156.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <7> on input line 156.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <5> on input line 156.
+ [2] [3] [4]
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 3
+40.
 
 (/usr/share/texmf/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
-)
+) [5] [6]
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 426.
- [6] [7] [8] [9]
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 476.
+ [7] [8] [9] [10]
 LaTeX Font Info:    Trying to load font information for TS1+lmtt on input line 
-586.
+637.
 
 (/usr/share/texmf/tex/latex/lm/ts1lmtt.fd
 File: ts1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
-) [10] [11]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 668.
+) [11]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 719.
  [12]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 668.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 719.
  (./essay.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 668.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 668.
-Package rerunfilecheck Info: File `essay.out' has not changed.
-(rerunfilecheck)             Checksum: D109410E3606A0B54CB3C7E109436E78;2055.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 719.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 719.
+
+
+Package rerunfilecheck Warning: File `essay.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `essay.out':
+(rerunfilecheck)             Before: 62E72E2434C26969869AA768ADB8732A;2427
+(rerunfilecheck)             After:  AC2ACBD52CC3191EFC13799DD48876F3;2336.
  ) 
 Here is how much of TeX's memory you used:
- 12079 strings out of 483140
- 176997 string characters out of 5965151
- 444957 words of memory out of 5000000
- 26777 multiletter control sequences out of 15000+600000
- 594278 words of font info for 111 fonts, out of 8000000 for 9000
+ 12106 strings out of 483140
+ 177302 string characters out of 5965151
+ 445126 words of memory out of 5000000
+ 26783 multiletter control sequences out of 15000+600000
+ 594859 words of font info for 118 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
- 34i,9n,42p,813b,497s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc}{/usr/share/texmf/fonts/enc/d
-vips/lm/lm-ec.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathex.enc}{/usr/shar
-e/texmf/fonts/enc/dvips/lm/lm-mathsy.enc}{/usr/share/texmf/fonts/enc/dvips/lm/l
-m-rm.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathit.enc}</usr/share/texmf/f
-onts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx12.
-pfb></usr/share/texmf/fonts/type1/public/lm/lmbx8.pfb></usr/share/texmf/fonts/t
-ype1/public/lm/lmex10.pfb></usr/share/texmf/fonts/type1/public/lm/lmmi10.pfb></
-usr/share/texmf/fonts/type1/public/lm/lmmi7.pfb></usr/share/texmf/fonts/type1/p
-ublic/lm/lmr10.pfb></usr/share/texmf/fonts/type1/public/lm/lmr12.pfb></usr/shar
-e/texmf/fonts/type1/public/lm/lmr17.pfb></usr/share/texmf/fonts/type1/public/lm
-/lmr6.pfb></usr/share/texmf/fonts/type1/public/lm/lmr7.pfb></usr/share/texmf/fo
-nts/type1/public/lm/lmr8.pfb></usr/share/texmf/fonts/type1/public/lm/lmsy10.pfb
-></usr/share/texmf/fonts/type1/public/lm/lmtk10.pfb></usr/share/texmf/fonts/typ
-e1/public/lm/lmtt10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtti10.pfb></u
-sr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on essay.pdf (12 pages, 337163 bytes).
+ 34i,9n,42p,813b,491s stack positions out of 5000i,500n,10000p,200000b,80000s
+pdfTeX warning (dest): name{section*.18} has been referenced but does not exi
+st, replaced by a fixed one
+
+{/usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc}{/usr/share/texmf/fonts/enc/dvi
+ps/lm/lm-ec.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathex.enc}{/usr/share/
+texmf/fonts/enc/dvips/lm/lm-mathsy.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-
+rm.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathit.enc}</usr/share/texmf/fon
+ts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx12.pf
+b></usr/share/texmf/fonts/type1/public/lm/lmbx8.pfb></usr/share/texmf/fonts/typ
+e1/public/lm/lmex10.pfb></usr/share/texmf/fonts/type1/public/lm/lmmi10.pfb></us
+r/share/texmf/fonts/type1/public/lm/lmmi7.pfb></usr/share/texmf/fonts/type1/pub
+lic/lm/lmr10.pfb></usr/share/texmf/fonts/type1/public/lm/lmr12.pfb></usr/share/
+texmf/fonts/type1/public/lm/lmr17.pfb></usr/share/texmf/fonts/type1/public/lm/l
+mr6.pfb></usr/share/texmf/fonts/type1/public/lm/lmr7.pfb></usr/share/texmf/font
+s/type1/public/lm/lmr8.pfb></usr/share/texmf/fonts/type1/public/lm/lmsy10.pfb><
+/usr/share/texmf/fonts/type1/public/lm/lmtk10.pfb></usr/share/texmf/fonts/type1
+/public/lm/lmtt10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtti10.pfb></usr
+/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
+Output written on essay.pdf (12 pages, 343850 bytes).
 PDF statistics:
- 236 PDF objects out of 1000 (max. 8388607)
- 202 compressed objects within 3 object streams
- 50 named destinations out of 1000 (max. 500000)
- 12409 words of extra memory for PDF output out of 14400 (max. 10000000)
+ 253 PDF objects out of 1000 (max. 8388607)
+ 219 compressed objects within 3 object streams
+ 57 named destinations out of 1000 (max. 500000)
+ 12433 words of extra memory for PDF output out of 14400 (max. 10000000)
 

@@ -157,6 +157,8 @@ The Interview challenge opens with the following questions:
 > 1. The ratio of gonorrhea rate to HIV diagnosis rate among people ages 25-44, and among people ages 45 or greater, in 2020
 > 2. The ratio of heroin use rate to HIV diagnosis rate among people ages 12 and older in 2020
 
+## Part 1 Answers
+
 I've included a code package that includes code written in R to answer these questions. We can calculate the frequency of Gonorrhea and HIV for each of the age ranges included in the given datasets. We can then calculate the sum of people in both datasets who have these conditions in the 25-44 age cohorts. Dividing these sums we find that:
 
 1. (a) The ratio of gonorrhea rate to HIV diagnosis rate among people aged 25-44 is **19.8**.
@@ -170,6 +172,8 @@ This calculation is accurate to the number of digits shown. However, given the r
 2. We cannot accurately estimate the ratio of heroin use rate to HIV diagnosis rate for people ages 12 and older.
 
 The reason we cannot estimate this datum is because the age partitions used by the HIV rate dataset and the population age distribution are not compatible (as defined above).  The best that we can do is to use some form of curve fitting or interpolation to estimate population density over age and then use this to estimate the number of people falling within the age ranges used by the heroin dataset. 
+
+## Part 2 Answers
 
 The interview challenge continues by giving a specification for a function that "... takes three datasets as inputs (two with rates per population and one with population) and returns the ratio of these rates by the most granular age brackets possible".  The `getRateRatio` function defined in the code sample given in Appendix 1 implements this function specification.
 
@@ -295,7 +299,8 @@ getFrequency <- function (ps, rs) {
   rebase (
     function (sizes, rates) {
       if (length (rates) != 1) {
-        stop ("Error: the population partition is not a \"refinement\" of the rate partition")
+        stop ("Error: the population partition is not
+              a \"refinement\" of the rate partition")
       }
       rates[1]*sum (sizes)
     }, ps, rs
