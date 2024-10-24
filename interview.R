@@ -1,59 +1,52 @@
 # This package contains definitions that can be used to represent and combine
 # stratified datasets.
 #
-# It defines a datatype named interval that represents half open intervals of
-# the real number line. These intervals can be used to partition the real number
-# line into a finite number of intervals. A population can be divided across
-# these intervals and information about the subpopulation associated with each
-# group can be added.
+# An annotated partition is a list of contiguous non-overlapping closed-open
+# intervals that span a subset of the real number line where each interval is
+# associated with a value.
+#
+# The functions defined below assume that the intervals are listed in
+# increasing order. The last interval may be unbounded.
 #
 # At the end of this file, we use these definitions to describe the prevalence
 # of HIV and gonorrhea across Baltimore City.
 
 UNBOUND=quote(unbound)
 
-# Constructs an annotated interval
-# These objects represent the closed-open intervals of the postive real number
-# line.
-# Annotated partitions are represented by list of interval objects
-interval <- function (info, start, end = UNBOUND) {
-  list (info=info, start=start, end=end)
-}
-
-# Accepts two real numbers x and y who may be "unbound" and compares them.
+# Accepts two real numbers x and y that may be "unbound" and compares them.
 boundCompare <- function (x, y) {
-  if (x == y) { 
-    return (0)
-  } else if (x < y || y == UNBOUND) {
-    return (-1)
-  } else if (x > y || x == UNBOUND) {
-    return (1)
-  }
+  if (x == y) 0
+  else if (x < y || y == UNBOUND) -1
+  else if (x > y || x == UNBOUND) 1
 }
 
-# Accepts two real numbers x and y who may be "unbound" and returns true iff x
+# Accepts two real numbers x and y that may be "unbound" and returns true iff x
 # is less than or equal to y.
 boundLte <- function (x, y) boundCompare (x, y) <= 0
 
 # Accepts two real numbers who may be "unbound" and returns the smaller of them.
 boundMin <- function (x, y) {
-  if (x == UNBOUND) {
-    y
-  } else if (y == UNBOUND) {
-    x
-  } else {
-    min (x, y)
-  }
+  if (x == UNBOUND) y
+  else if (y == UNBOUND) x
+  else min (x, y)
+}
+
+# Constructs an annotated interval
+# These objects represent closed-open intervals in the real number line.
+# @param info the "annotation value" associated with the interval
+# @param start the interval's lower bound
+# @param end the interval's upper bound
+# Note that interval's upper bounds can be unbounded
+interval <- function (info, start, end = UNBOUND) {
+  list (info=info, start=start, end=end)
 }
 
 # Accepts three arguments:
-#
-# @param f a function that accepts two contiguous series of annotated intervals
-#   that span the same range of the positive real number line and merges them
+# @param f a function that accepts two lists of annotations of intervals that 
+#   span the same range of the positive real number line and merges them
 # @param xs, an annotated partition
 # @param ys, an annotated partition
-#
-# And returns a new annotated partition based on the most granular intervals
+# and returns a new annotated partition based on the most granular intervals
 # spanned by xs and ys whose annotations are derived from f.
 rebase <- function (f, xs, ys) {
   zs <- list ()
@@ -111,7 +104,6 @@ rebase <- function (f, xs, ys) {
 # and returns a partition that gives the absolute number of people who have the
 # condition within the most granular set of age ranges spanned by both
 # ps and rs.
-# @warn 
 getFrequency <- function (ps, rs) {
   rebase (
     function (sizes, rates) {
@@ -132,9 +124,9 @@ getFrequency <- function (ps, rs) {
 getFreqSum <- function (start, end, freqs) {
   sum <- 0
   for (freq in freqs) {
-    if (start <= freq$start && boundLte (freq$end, end)) {
-      sum <- sum + freq$info
-    }
+    if (!boundLte (freq$end, end)) break
+
+    if (start <= freq$start) sum <- sum + freq$info
   }
   sum
 }
@@ -146,13 +138,8 @@ getFreqSum <- function (start, end, freqs) {
 #   of age ranges who have condition y
 # and returns the rate ratios of the two conditions over the most granular
 # partition spanned by both xs and ys.
-# Note that xs and ys do not have use the same partition intervals.
 getFreqRateRatio <- function (xs, ys) {
-  rebase (
-    function (freqs0, freqs1) {
-      sum (freqs0)/sum (freqs1)
-    }, xs, ys
-  )
+  rebase (function (freqs0, freqs1) sum (freqs0)/sum (freqs1), xs, ys)
 }
 
 # Accepts three partitions:
