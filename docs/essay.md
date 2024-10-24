@@ -291,7 +291,8 @@ getFrequency <- function (ps, rs) {
   rebase (
     function (sizes, rates) {
       if (length (rates) != 1) {
-        stop ("Error: the population partition is not a \"refinement\" of the rate partition")
+        stop ("Error: the population partition is not a
+              \"refinement\" of the rate partition")
       }
       rates[1]*sum (sizes)
     }, ps, rs

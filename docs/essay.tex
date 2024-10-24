@@ -89,6 +89,7 @@
 \def\fps@figure{htbp}
 \makeatother
 
+
 \title{Johns Hopkins School of Public Health Coding Challenge}
 \author{Larry D. Lee Jr.}
 \date{October 18, 2024\\Revised: October 23, 2024}
@@ -96,7 +97,6 @@
 \begin{document}
 
 \maketitle
-
 
 \begin{quote}
 Abstract: This technical note answers the questions presented in Johns
@@ -464,59 +464,52 @@ function specification.
 \CommentTok{# This package contains definitions that can be used to represent and combine}
 \CommentTok{# stratified datasets.}
 \CommentTok{#}
-\CommentTok{# It defines a datatype named interval that represents half open intervals of}
-\CommentTok{# the real number line. These intervals can be used to partition the real number}
-\CommentTok{# line into a finite number of intervals. A population can be divided across}
-\CommentTok{# these intervals and information about the subpopulation associated with each}
-\CommentTok{# group can be added.}
+\CommentTok{# An annotated partition is a list of contiguous non-overlapping closed-open}
+\CommentTok{# intervals that span a subset of the real number line where each interval is}
+\CommentTok{# associated with a value.}
+\CommentTok{#}
+\CommentTok{# The functions defined below assume that the intervals are listed in}
+\CommentTok{# increasing order. The last interval may be unbounded.}
 \CommentTok{#}
 \CommentTok{# At the end of this file, we use these definitions to describe the prevalence}
 \CommentTok{# of HIV and gonorrhea across Baltimore City.}
 
 \NormalTok{UNBOUND=}\KeywordTok{quote}\NormalTok{(unbound)}
 
-\CommentTok{# Constructs an annotated interval}
-\CommentTok{# These objects represent the closed-open intervals of the postive real number}
-\CommentTok{# line.}
-\CommentTok{# Annotated partitions are represented by list of interval objects}
-\NormalTok{interval <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (info, start, }\DataTypeTok{end =}\NormalTok{ UNBOUND) \{}
-  \KeywordTok{list}\NormalTok{ (}\DataTypeTok{info=}\NormalTok{info, }\DataTypeTok{start=}\NormalTok{start, }\DataTypeTok{end=}\NormalTok{end)}
-\NormalTok{\}}
-
-\CommentTok{# Accepts two real numbers x and y who may be "unbound" and compares them.}
+\CommentTok{# Accepts two real numbers x and y that may be "unbound" and compares them.}
 \NormalTok{boundCompare <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (x, y) \{}
-  \ControlFlowTok{if}\NormalTok{ (x }\OperatorTok{==}\StringTok{ }\NormalTok{y) \{ }
-    \KeywordTok{return}\NormalTok{ (}\DecValTok{0}\NormalTok{)}
-\NormalTok{  \} }\ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (x }\OperatorTok{<}\StringTok{ }\NormalTok{y }\OperatorTok{||}\StringTok{ }\NormalTok{y }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND) \{}
-    \KeywordTok{return}\NormalTok{ (}\OperatorTok{-}\DecValTok{1}\NormalTok{)}
-\NormalTok{  \} }\ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (x }\OperatorTok{>}\StringTok{ }\NormalTok{y }\OperatorTok{||}\StringTok{ }\NormalTok{x }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND) \{}
-    \KeywordTok{return}\NormalTok{ (}\DecValTok{1}\NormalTok{)}
-\NormalTok{  \}}
+  \ControlFlowTok{if}\NormalTok{ (x }\OperatorTok{==}\StringTok{ }\NormalTok{y) }\DecValTok{0}
+  \ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (x }\OperatorTok{<}\StringTok{ }\NormalTok{y }\OperatorTok{||}\StringTok{ }\NormalTok{y }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND) }\DecValTok{-1}
+  \ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (x }\OperatorTok{>}\StringTok{ }\NormalTok{y }\OperatorTok{||}\StringTok{ }\NormalTok{x }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND) }\DecValTok{1}
 \NormalTok{\}}
 
-\CommentTok{# Accepts two real numbers x and y who may be "unbound" and returns true iff x}
+\CommentTok{# Accepts two real numbers x and y that may be "unbound" and returns true iff x}
 \CommentTok{# is less than or equal to y.}
 \NormalTok{boundLte <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (x, y) }\KeywordTok{boundCompare}\NormalTok{ (x, y) }\OperatorTok{<=}\StringTok{ }\DecValTok{0}
 
 \CommentTok{# Accepts two real numbers who may be "unbound" and returns the smaller of them.}
 \NormalTok{boundMin <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (x, y) \{}
-  \ControlFlowTok{if}\NormalTok{ (x }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND) \{}
-\NormalTok{    y}
-\NormalTok{  \} }\ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (y }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND) \{}
-\NormalTok{    x}
-\NormalTok{  \} }\ControlFlowTok{else}\NormalTok{ \{}
-    \KeywordTok{min}\NormalTok{ (x, y)}
-\NormalTok{  \}}
+  \ControlFlowTok{if}\NormalTok{ (x }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND) y}
+  \ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (y }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND) x}
+  \ControlFlowTok{else} \KeywordTok{min}\NormalTok{ (x, y)}
+\NormalTok{\}}
+
+\CommentTok{# Constructs an annotated interval}
+\CommentTok{# These objects represent closed-open intervals in the real number line.}
+\CommentTok{# @param info the "annotation value" associated with the interval}
+\CommentTok{# @param start the interval's lower bound}
+\CommentTok{# @param end the interval's upper bound}
+\CommentTok{# Note that interval's upper bounds can be unbounded}
+\NormalTok{interval <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (info, start, }\DataTypeTok{end =}\NormalTok{ UNBOUND) \{}
+  \KeywordTok{list}\NormalTok{ (}\DataTypeTok{info=}\NormalTok{info, }\DataTypeTok{start=}\NormalTok{start, }\DataTypeTok{end=}\NormalTok{end)}
 \NormalTok{\}}
 
 \CommentTok{# Accepts three arguments:}
-\CommentTok{#}
-\CommentTok{# @param f a function that accepts two contiguous series of annotated intervals}
-\CommentTok{#   that span the same range of the positive real number line and merges them}
+\CommentTok{# @param f a function that accepts two lists of annotations of intervals that }
+\CommentTok{#   span the same range of the positive real number line and merges them}
 \CommentTok{# @param xs, an annotated partition}
 \CommentTok{# @param ys, an annotated partition}
-\CommentTok{#}
-\CommentTok{# And returns a new annotated partition based on the most granular intervals}
+\CommentTok{# and returns a new annotated partition based on the most granular intervals}
 \CommentTok{# spanned by xs and ys whose annotations are derived from f.}
 \NormalTok{rebase <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (f, xs, ys) \{}
 \NormalTok{  zs <-}\StringTok{ }\KeywordTok{list}\NormalTok{ ()}
@@ -574,13 +567,12 @@ function specification.
 \CommentTok{# and returns a partition that gives the absolute number of people who have the}
 \CommentTok{# condition within the most granular set of age ranges spanned by both}
 \CommentTok{# ps and rs.}
-\CommentTok{# @warn }
 \NormalTok{getFrequency <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (ps, rs) \{}
   \KeywordTok{rebase}\NormalTok{ (}
     \ControlFlowTok{function}\NormalTok{ (sizes, rates) \{}
       \ControlFlowTok{if}\NormalTok{ (}\KeywordTok{length}\NormalTok{ (rates) }\OperatorTok{!=}\StringTok{ }\DecValTok{1}\NormalTok{) \{}
-        \KeywordTok{stop}\NormalTok{ (}\StringTok{"Error: the population partition is not}
-\StringTok{              a }\CharTok{\textbackslash{}"}\StringTok{refinement}\CharTok{\textbackslash{}"}\StringTok{ of the rate partition"}\NormalTok{)}
+        \KeywordTok{stop}\NormalTok{ (}\StringTok{"Error: the population partition is not a}
+\StringTok{              }\CharTok{\textbackslash{}"}\StringTok{refinement}\CharTok{\textbackslash{}"}\StringTok{ of the rate partition"}\NormalTok{)}
 \NormalTok{      \}}
 \NormalTok{      rates[}\DecValTok{1}\NormalTok{]}\OperatorTok{*}\KeywordTok{sum}\NormalTok{ (sizes)}
 \NormalTok{    \}, ps, rs}
@@ -596,9 +588,9 @@ function specification.
 \NormalTok{getFreqSum <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (start, end, freqs) \{}
 \NormalTok{  sum <-}\StringTok{ }\DecValTok{0}
   \ControlFlowTok{for}\NormalTok{ (freq }\ControlFlowTok{in}\NormalTok{ freqs) \{}
-    \ControlFlowTok{if}\NormalTok{ (start }\OperatorTok{<=}\StringTok{ }\NormalTok{freq}\OperatorTok{$}\NormalTok{start }\OperatorTok{&&}\StringTok{ }\KeywordTok{boundLte}\NormalTok{ (freq}\OperatorTok{$}\NormalTok{end, end)) \{}
-\NormalTok{      sum <-}\StringTok{ }\NormalTok{sum }\OperatorTok{+}\StringTok{ }\NormalTok{freq}\OperatorTok{$}\NormalTok{info}
-\NormalTok{    \}}
+    \ControlFlowTok{if}\NormalTok{ (}\OperatorTok{!}\KeywordTok{boundLte}\NormalTok{ (freq}\OperatorTok{$}\NormalTok{end, end)) }\ControlFlowTok{break}
+
+    \ControlFlowTok{if}\NormalTok{ (start }\OperatorTok{<=}\StringTok{ }\NormalTok{freq}\OperatorTok{$}\NormalTok{start) sum <-}\StringTok{ }\NormalTok{sum }\OperatorTok{+}\StringTok{ }\NormalTok{freq}\OperatorTok{$}\NormalTok{info}
 \NormalTok{  \}}
 \NormalTok{  sum}
 \NormalTok{\}}
@@ -610,13 +602,8 @@ function specification.
 \CommentTok{#   of age ranges who have condition y}
 \CommentTok{# and returns the rate ratios of the two conditions over the most granular}
 \CommentTok{# partition spanned by both xs and ys.}
-\CommentTok{# Note that xs and ys do not have use the same partition intervals.}
 \NormalTok{getFreqRateRatio <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (xs, ys) \{}
-  \KeywordTok{rebase}\NormalTok{ (}
-    \ControlFlowTok{function}\NormalTok{ (freqs0, freqs1) \{}
-      \KeywordTok{sum}\NormalTok{ (freqs0)}\OperatorTok{/}\KeywordTok{sum}\NormalTok{ (freqs1)}
-\NormalTok{    \}, xs, ys}
-\NormalTok{  )}
+  \KeywordTok{rebase}\NormalTok{ (}\ControlFlowTok{function}\NormalTok{ (freqs0, freqs1) }\KeywordTok{sum}\NormalTok{ (freqs0)}\OperatorTok{/}\KeywordTok{sum}\NormalTok{ (freqs1), xs, ys)}
 \NormalTok{\}}
 
 \CommentTok{# Accepts three partitions:}
