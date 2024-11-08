@@ -157,6 +157,62 @@ getRateRatio <- function (ps, xs, ys) {
   getFreqRateRatio (xFreq, yFreq)
 }
 
+
+# Accepts two argumnets:
+# @param n, an integer
+# @param xs, an annotated partition
+# and returns a new annotated partition in which every interval in xs has been
+# subdivided into n equal subintervals and the value assigned to those intervals
+# has been distributed equally across the subintervals.
+# Note: This function skips all unbound intervals.
+refineUniform <- function (n, xs) {
+  ys <- list ()
+  for (i in 1:length (xs)) {
+    x <- xs[[i]]
+    if (x$start == UNBOUND || x$end == UNBOUND) next
+    w <- x$end - x$start
+    for (j in 0:(n - 1)) {
+      ys <- append (ys,
+        list (interval (
+          info=x$info/n,
+          start=x$start + (j*w/n),
+          end=x$start + ((j + 1)*w/n)
+      )))
+    }
+  }
+  ys
+}
+
+# Accepts two argumnets:
+# @param n, an integer
+# @param xs, an annotated partition
+# and returns a new annotated partition in which every interval in xs has been
+# subdivided into n equal subintervals and the value assigned to those intervals
+# has been distributed across the subintervals using the linear (not the
+# uniform) estimator.
+# Note: This function skips all unbound intervals. 
+refineLinear <- function (n, xs) {
+  ys <- list ()
+  for (i in 1:length (xs)) {
+    x <- xs[[i]]
+    if (x$start == UNBOUND || x$end == UNBOUND) next
+    prevInfo <- if (i - 1 > 0) xs[[i - 1]]$info else 0 
+    nextInfo <- if (i + 1 <= length (xs)) xs[[i + 1]]$info else 0
+    w <- x$end - x$start
+    k <- (nextInfo - x$info)/w
+    for (j in 0:(n - 1)) {
+      ys <- append (ys,
+        list (interval (
+          info=x$info*(2*j*k*w + k*w + 2*n*prevInfo)/
+               ((n^2)*(k*w + 2*prevInfo)),
+          start=x$start + (j*w/n),
+          end=x$start + ((j + 1)*w/n)
+      )))
+    }
+  }
+  ys
+}
+
 # A partition listing the number of Baltimore residents who's ages fall within
 # a contiguous set of age ranges.
 population = list (
@@ -178,6 +234,20 @@ population = list (
   interval (13910, 75, 79),
   interval (8977, 80, 84),
   interval (9073, 85)
+)
+
+# A partition listing the number of Baltimore residents who's ages fall within
+# a contiguous set of age ranges.
+populationRefine = list (
+  interval (103718, 0, 14),
+  interval (33872, 15, 19),
+  interval (37183, 20, 24),
+  interval (108161, 25, 34)
+  interval (43408, 35, 39),
+  interval (34271, 40, 44),
+  interval (63696, 45, 54),
+  interval (74534, 55, 64),
+  interval (84314, 65, UNBOUND)
 )
 
 # A partition listing the rates of HIV amongst Baltimore residents falling

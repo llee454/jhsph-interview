@@ -39,6 +39,8 @@ $$
 \end{align*}
 $$
 
+We will also consider uniform contiguous clopen interval partitions (**uCCIPs**) of the positive real number line $\mathbb{R}^+.$ These are CCIPs where every interval has a uniform width $w$. 
+
 ## Stratification
 
 A **stratification** is a partition $p$ of some set $A$ in which elements from $s$ are allocated to different sets in $p$ based some property value such as age. For this technical note, $A$ will always be the positive real number line $\mathbb{R}^+$.
@@ -135,7 +137,7 @@ generalizes?\ (\pi, p, q) := refines? (p, \pi) \wedge refines?\ (q, \pi).
 $$
 We say that $\pi$ is the **most granular generalization** of $p$ and $q$ iff $\pi$ refines every other generalization of $p$ and $q$. 
 
-We can easily prove that the intervals in $\pi$ start and end at boundary points shared by both $p$ and $q$. What's more, we can define an algorithm that accepts two arbitrary CCIPs and returns there most granular generalization. This algorithm is a scanning algorithm and runs in linear time. The `rebase` function defined in the code sample presented in Appendix 1 presents an implementation of this algorithm in R.
+We can easily prove that the intervals in $\pi$ start and end at boundary points shared by both $p$ and $q$. What's more, we can define an algorithm that accepts two arbitrary CCIPs and returns there most granular generalization. This algorithm is a scanning algorithm and runs in linear time. The `rebase` function defined in the code sample presented in Appendix 2 presents an implementation of this algorithm in R.
 
 ## Incompatible Partitions
 
@@ -175,9 +177,121 @@ The reason we cannot estimate this datum is because the age partitions used by t
 
 ## Part 2 Answers
 
-The interview challenge continues by giving a specification for a function that "... takes three datasets as inputs (two with rates per population and one with population) and returns the ratio of these rates by the most granular age brackets possible".  The `getRateRatio` function defined in the code sample given in Appendix 1 implements this function specification.
+The interview challenge continues by giving a specification for a function that "... takes three datasets as inputs (two with rates per population and one with population) and returns the ratio of these rates by the most granular age brackets possible".  The `getRateRatio` function defined in the code sample given in Appendix 2 implements this function specification.
 
-# Appendix 1: R Code Sample
+# Appendix 1: Incompatible Partitions
+
+In this appendix, we consider those situations in which we have two datasets that use incompatible partitions.
+
+In general, we cannot safely combine incompatible datasets. To see this consider the following scenario in which $p = [[0, 2]]$ and and $q = [[1, 2]]$. Assume that 100 people in $p_1$ have condition $x$ and that 50 people in $q_1$ have condition $y$. We cannot safely calculate the overlap between these two groups because we do not know if all of the people in $p_1$ with condition $x$ fall within the interval $[0, 1]$, $[1, 2]$, or are distributed between them. Thus, the overlap could be 0, 100%, or any value in between.
+
+If however, we can make additional assumptions about the underlying distribution of people across the domain partitioned by $p$ and $q$ we can estimate the overlap between partition sets.
+
+## Additional Assumptions
+
+The fundamental problem is that we do not know how a population is distributed within any partition interval $p_i$. If we subdivide $p_i$ into two equal subintervals $p_{i,0}$ and $p_{i,1}$, we find that all of the people within $p_i$ fall within one, the other, or are distributed between both.
+
+We want to be able to refine partitions and estimate the number of people within those refined subintervals. That is, we want to be able to subdivide each partition interval $p_i$ into a set of subintervals $r_i$ and estimate the population falling within each interval.
+
+To do this, we must first ask ourselves what makes a good estimate. The worst that we can do is subdivide an interval into $n$ subintervals and discover that the entire population is concentrated into just one of them. The best that we can do is exactly estimate the proportion of the population in each of them.
+
+Thus, we want to ensure that we are only dealing with distributions for which our maximum interval estimate error has some finite bound. This suggests that our criteria will vary based on our estimation technique. For example, if we assume that population is distributed evenly within a partition interval and the real population is not distributed evenly, the proportional estimate error is unbound. 
+
+Let $f : \mathbb{R}^+ \rightarrow \mathbb{R}^+$ represent the underlying probability distribution over some set $s : \mathbb{R}^+$ such as potential ages. It is often natural to assume that $f$ is **differentiable** and whose derivative magnitude is bounded by some constant $\kappa$.
+$$
+\begin{align*}
+\forall x \in \mathbb{R}^+, |\frac{d f (x)}{dx}| \le \kappa. 
+\end{align*}
+$$
+Many theoretical distribution functions satisfy this requirement. For example, both the normal distribution function and the log-normal distribution functions do.
+
+Given this assumption, we can define concrete error bounds on our interval estimates. Let $p_i$ represent an interval $[a, a + w]$ of width $w$ that contains $|s_i|$ people. Let's consider dividing this interval into $n$ subintervals $r_{i,j}$ and focus on the first subinterval $r_{i,0}$. Then the minimum number of people who could be within $r_{i,0}$ occurs when $f$ is a linear function of slope $\kappa$ and assumes some minimum value $f (a)$ at the start of $r_{i, 0}$. In this instance, the number of people in  $r_{i, 0}$ will equal:
+$$
+\begin{align*}
+||r_{i, 0}|| = \int_a^{a+w/n} f (x)\ dx \ge \int_a^{a+w/n} \kappa\ x + f (a)\ dx = \frac{\kappa\ w^2}{2\ n^2}  + \frac{w}{n}f (a)
+\end{align*}
+$$
+where:
+$$
+\begin{align*}
+f (a) = \frac{|s_i|}{w} - \frac{\kappa\ w}{2}.
+\end{align*}
+$$
+From similar calculations we find that:
+$$
+\begin{align*}
+\frac{s_i}{n} + \frac{k\ w^2}{2n}(\frac{1}{n} - 1) \le ||r_{i, j}|| \le \frac{s_i}{n} + \frac{k\ w^2}{2n}(1 - \frac{1}{n})
+\end{align*}
+$$
+
+## Uniform Estimator
+
+Next, Let's consider how we might subdivide a partition interval and estimate the number of people within each subinterval. The simplest approach is to assume that the underlying distribution function is approximately uniformly distributed across these intervals. Thus, given an interval $p_i := [a, a+w]$ with $s_i$ people in it, we can divide the interval into $n$ subintervals $r_{i, j}$ and assign $m_{i,j} := s_i/n$ people to each.
+
+### Error Bounds
+
+If we assume that the underlying distribution is differentiable with maximum derivative $\kappa$, we can prove that the maximum interval population estimate error $\epsilon$ is constrained by:
+$$
+\begin{align*}
+|\epsilon| \le |\frac{k\ w^2}{2n}(1 - \frac{1}{n})|
+\end{align*}
+$$
+
+## Linear Estimator
+
+We may be able to do better than uniform estimator however. Consider a partition $p$, where each interval $p_i$ has $s_i$ people in it. Often it is reasonable to assume that increases and decreases from $s_i$ to $s_{i+1}$ reflect changes in the underlying distribution. If so, we can try to reflect these underlying changes by assuming that the distribution across a series of subintervals is not uniform but linearly increasing and decreasing.
+
+To understand how we can do this, imagine that we draw line segments connecting the starting points of each interval. This produces a continuous (non-smooth) curve $g (x)$. We then assume that the underlying population distribution function $f (x)$ is approximately proportional to $g (x)$:
+$$
+\begin{align*}
+\exists \lambda \in \mathbb{R}, \forall x \in \mathbb{R}^+ f (x) \approx \lambda\ g(x).
+\end{align*}
+$$
+Our challenge then is to calculate the scaling factor $\lambda$ such the number of people allocated to each interval $p_i$ equals the observed values $|s_i|$.
+
+Let's focus on a single interval $p_i = [a, a+w]$. Over this interval $g (x)$ will be a linear equation thus: $\exists k_0 \in \mathbb{R}, g (x) := k_0 x + g (a)$. We will derive an estimate for the underlying distribution function $\hat{f}_i (x) := \lambda\ g (x) = \lambda (k_0 x + g (a)) = \lambda k_0 x + \hat{f}_i (a)$ that we assume approximates $f (x)$ over the interval.
+
+Our challenge is to solve for $\lambda$.
+$$
+\begin{align*}
+|s_i| = \int_a^{a+w} \hat{f}_i(x)\ dx = \int_a^{a+w} \lambda\ g(x)\ dx = \lambda \int_a^{a+w}k_0\ x + g (a)\ dx = \lambda (\frac{k_0\ w^2}{2} + g(a) w) 
+\end{align*}
+$$
+Thus:
+$$
+\begin{align*}
+\lambda = \frac{2\ |s_i|}{w\ (k_0\ w + 2\ g (a))}.
+\end{align*}
+$$
+
+From these considerations we derive our estimator.
+$$
+\begin{align*}
+\hat{f}_i (x) := \frac{2\ |s_i| (k_0 x + g (a))}{w(k_0 w + 2 g(a))}.
+\end{align*}
+$$
+
+If we divide our interval $p_i$ into $n$ equal subintervals $r_{i,j}$ the number of people $m_{i,j}$ we estimate lie within each subinterval will equal:
+$$
+\begin{align*}
+m_{i,j} &= \int_{a+jw/n}^{a+(j+1)w/n} \hat{f}_i (x) dx\\
+\\
+&= \frac{|s_i|(2 j k_0 w + k_0 w + 2 n\ g(a))}{n^2 (k_0 w + 2\ g(a))}.
+\end{align*}
+$$
+
+### Error Bounds
+
+We can now ask ourselves what the maximum error bounds are for this estimator. In our case. the worst possibility is for the true distribution function to be linear over each interval with a slope $\kappa$ that is opposite to ours. Note that, we assume that the function is smoothed at the interval transitions to avoid discontinuities.
+
+## Example
+
+> We have counts of new gonorrhea diagnoses in age groups: 0-14 years, 15-19 years, 20-24 years, 25-34 years, 35-39 years, 40-44 years, 45-54 years, 55-64 years, and 65+ years old. We want to estimate the count of new gonorrhea diagnoses for each individual age from 0 to 85.
+>
+> Describe an algorithm that will create single-year age estimates of new gonorrhea diagnosis counts. What assumptions does your algorithm make? There are a range of reasonable answers.
+
+
+# Appendix 2: R Code Sample
 
 
 ```R
