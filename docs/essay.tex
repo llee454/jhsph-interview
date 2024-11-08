@@ -89,10 +89,9 @@
 \def\fps@figure{htbp}
 \makeatother
 
-
 \title{Johns Hopkins School of Public Health Coding Challenge}
 \author{Larry D. Lee Jr.}
-\date{October 18, 2024\\Revised: October 23, 2024}
+\date{October 18, 2024\\REVISED: November 7, 2024}
 
 \begin{document}
 
@@ -181,6 +180,10 @@ there are no gaps between these intervals thus:
 \begin{align*}
 \forall p : [Interval], \forall x \in \mathbb{R}, x \ge p_0.start\ \wedge x < p_n.end \implies \exists p_i \in p, x \in p.
 \end{align*}
+
+We will also consider uniform contiguous clopen interval partitions
+(\textbf{uCCIPs}) of the positive real number line \(\mathbb{R}^+.\)
+These are CCIPs where every interval has a uniform width \(w\).
 
 \hypertarget{stratification}{%
 \subsection{Stratification}\label{stratification}}
@@ -338,7 +341,7 @@ boundary points shared by both \(p\) and \(q\). What's more, we can
 define an algorithm that accepts two arbitrary CCIPs and returns there
 most granular generalization. This algorithm is a scanning algorithm and
 runs in linear time. The \texttt{rebase} function defined in the code
-sample presented in Appendix 1 presents an implementation of this
+sample presented in Appendix 2 presents an implementation of this
 algorithm in R.
 
 \hypertarget{incompatible-partitions}{%
@@ -394,6 +397,15 @@ or if they cannot be calculated exactly, explain why
   The ratio of heroin use rate to HIV diagnosis rate among people ages
   12 and older in 2020
 \end{enumerate}
+
+PART 3: We have counts of new gonorrhea diagnoses in age groups: 0-14
+years, 15-19 years, 20-24 years, 25-34 years, 35-39 years, 40-44 years,
+45-54 years, 55-64 years, and 65+ years old. We want to estimate the
+count of new gonorrhea diagnoses for each individual age from 0 to 85.
+
+Describe an algorithm that will create single-year age estimates of new
+gonorrhea diagnosis counts. What assumptions does your algorithm make?
+There are a range of reasonable answers.
 \end{quote}
 
 \hypertarget{part-1-answers}{%
@@ -453,11 +465,211 @@ The interview challenge continues by giving a specification for a
 function that "... takes three datasets as inputs (two with rates per
 population and one with population) and returns the ratio of these rates
 by the most granular age brackets possible". The \texttt{getRateRatio}
-function defined in the code sample given in Appendix 1 implements this
+function defined in the code sample given in Appendix 2 implements this
 function specification.
 
-\hypertarget{appendix-1-r-code-sample}{%
-\section{Appendix 1: R Code Sample}\label{appendix-1-r-code-sample}}
+\hypertarget{part-3-answers}{%
+\subsection{Part 3 Answers}\label{part-3-answers}}
+
+In Appendix 1, we describe a range of methods for refining partitions
+and estimating population distributions across those refinements.
+Specifically, the functions \texttt{refineUniform} and
+\texttt{refineLinear} presented in Appendix 2 implement the algorithms
+described in Appendix 1.
+
+\hypertarget{appendix-1-incompatible-partitions}{%
+\section{Appendix 1: Incompatible
+Partitions}\label{appendix-1-incompatible-partitions}}
+
+In this appendix, we consider those situations in which we have two
+datasets that use incompatible partitions.
+
+In general, we cannot safely combine incompatible datasets. To see this
+consider the following scenario in which \(p = [[0, 2]]\) and and
+\(q = [[1, 2]]\). Assume that 100 people in \(p_1\) have condition \(x\)
+and that 50 people in \(q_1\) have condition \(y\). We cannot safely
+calculate the overlap between these two groups because we do not know if
+all of the people in \(p_1\) with condition \(x\) fall within the
+interval \([0, 1]\), \([1, 2]\), or are distributed between them. Thus,
+the overlap could be 0, 100\%, or any value in between.
+
+If however, we can make additional assumptions about the underlying
+distribution of people across the domain partitioned by \(p\) and \(q\)
+we can estimate the overlap between partition sets.
+
+\hypertarget{additional-assumptions}{%
+\subsection{Additional Assumptions}\label{additional-assumptions}}
+
+The fundamental problem is that we do not know how a population is
+distributed within any partition interval \(p_i\). If we subdivide
+\(p_i\) into two equal subintervals \(p_{i,0}\) and \(p_{i,1}\), we find
+that all of the people within \(p_i\) fall within one, the other, or are
+distributed between both.
+
+We want to be able to refine partitions and estimate the number of
+people within those refined subintervals. That is, we want to be able to
+subdivide each partition interval \(p_i\) into a set of subintervals
+\(r_i\) and estimate the population falling within each interval.
+
+To do this, we must first ask ourselves what makes a good estimate. The
+worst that we can do is subdivide an interval into \(n\) subintervals
+and discover that the entire population is concentrated into just one of
+them. The best that we can do is exactly estimate the proportion of the
+population in each of them.
+
+Thus, we want to ensure that we are only dealing with distributions for
+which our maximum interval estimate error has some finite bound. This
+suggests that our criteria will vary based on our estimation technique.
+For example, if we assume that population is distributed evenly within a
+partition interval and the real population is not distributed evenly,
+the proportional estimate error is unbound.
+
+Let \(f : \mathbb{R}^+ \rightarrow \mathbb{R}^+\) represent the
+underlying probability distribution over some set \(s : \mathbb{R}^+\)
+such as potential ages. It is often natural to assume that \(f\) is
+\textbf{differentiable} and whose derivative magnitude is bounded by
+some constant \(\kappa\).
+
+\begin{align*}
+\forall x \in \mathbb{R}^+, |\frac{d f (x)}{dx}| \le \kappa. 
+\end{align*}
+
+Many theoretical distribution functions satisfy this requirement. For
+example, both the normal distribution function and the log-normal
+distribution functions do.
+
+Given this assumption, we can define concrete bounds on the number of
+people who can potentially be in our intervals. Let \(p_i\) represent an
+interval \([a, a + w]\) of width \(w\) that contains \(|s_i|\) people.
+Let's consider dividing this interval into \(n\) subintervals
+\(r_{i,j}\) and focus on the first subinterval \(r_{i,0}\). Then the
+minimum number of people who could be within \(r_{i,0}\) occurs when
+\(f\) is a linear function of slope \(\kappa\) and assumes some minimum
+value \(f (a)\) at the start of \(r_{i, 0}\). In this instance, the
+number of people in \(r_{i, 0}\) will equal:
+
+\begin{align*}
+||r_{i, 0}|| = \int_a^{a+w/n} f (x)\ dx \ge \int_a^{a+w/n} \kappa\ x + f (a)\ dx = \frac{\kappa\ w^2}{2\ n^2}  + \frac{w}{n}f (a)
+\end{align*}
+
+where:
+
+\begin{align*}
+f (a) = \frac{|s_i|}{w} - \frac{\kappa\ w}{2}.
+\end{align*}
+
+From similar calculations we find that:
+
+\begin{align*}
+\frac{s_i}{n} + \frac{k\ w^2}{2n}(\frac{1}{n} - 1) \le ||r_{i, j}|| \le \frac{s_i}{n} + \frac{k\ w^2}{2n}(1 - \frac{1}{n})
+\end{align*}
+
+\hypertarget{uniform-estimator}{%
+\subsection{Uniform Estimator}\label{uniform-estimator}}
+
+Next, Let's consider how we might subdivide a partition interval and
+estimate the number of people within each subinterval. The simplest
+approach is to assume that the underlying distribution function is
+approximately uniformly distributed across these intervals. Thus, given
+an interval \(p_i := [a, a+w]\) with \(s_i\) people in it, we can divide
+the interval into \(n\) subintervals \(r_{i, j}\) and assign
+\(m_{i,j} := s_i/n\) people to each.
+
+\hypertarget{error-bounds}{%
+\subsubsection{Error Bounds}\label{error-bounds}}
+
+If we assume that the underlying distribution is differentiable with
+maximum derivative \(\kappa\), we can prove that the maximum interval
+population estimate error \(\epsilon\) is constrained by:
+
+\begin{align*}
+|\epsilon| \le |\frac{k\ w^2}{2n}(1 - \frac{1}{n})|
+\end{align*}
+
+\hypertarget{algorithm}{%
+\subsubsection{Algorithm}\label{algorithm}}
+
+The \texttt{refineUniform} function presented in Appendix 2 implements
+this method.
+
+\hypertarget{linear-estimator}{%
+\subsection{Linear Estimator}\label{linear-estimator}}
+
+We may be able to do better than uniform estimator however. Consider a
+partition \(p\), where each interval \(p_i\) has \(s_i\) people in it.
+Often it is reasonable to assume that increases and decreases from
+\(s_i\) to \(s_{i+1}\) reflect changes in the underlying distribution.
+If so, we can try to reflect these underlying changes by assuming that
+the distribution across a series of subintervals is not uniform but
+linearly increasing and decreasing.
+
+To understand how we can do this, imagine that we draw line segments
+connecting the starting points of each interval. This produces a
+continuous (non-smooth) curve \(g (x)\). We then assume that the
+underlying population distribution function \(f (x)\) is approximately
+proportional to \(g (x)\):
+
+\begin{align*}
+\exists \lambda \in \mathbb{R}, \forall x \in \mathbb{R}^+ f (x) \approx \lambda\ g(x).
+\end{align*}
+
+Our challenge then is to calculate the scaling factor \(\lambda\) such
+the number of people allocated to each interval \(p_i\) equals the
+observed values \(|s_i|\).
+
+Let's focus on a single interval \(p_i = [a, a+w]\). Over this interval
+\(g (x)\) will be a linear equation thus:
+\(\exists k_0 \in \mathbb{R}, g (x) := k_0 x + g (a)\). We will derive
+an estimate for the underlying distribution function
+\(\hat{f}_i (x) := \lambda\ g (x) = \lambda (k_0 x + g (a)) = \lambda k_0 x + \hat{f}_i (a)\)
+that we assume approximates \(f (x)\) over the interval.
+
+Our challenge is to solve for \(\lambda\).
+
+\begin{align*}
+|s_i| = \int_a^{a+w} \hat{f}_i(x)\ dx = \int_a^{a+w} \lambda\ g(x)\ dx = \lambda \int_a^{a+w}k_0\ x + g (a)\ dx = \lambda (\frac{k_0\ w^2}{2} + g(a) w) 
+\end{align*}
+
+Thus:
+
+\begin{align*}
+\lambda = \frac{2\ |s_i|}{w\ (k_0\ w + 2\ g (a))}.
+\end{align*}
+
+From these considerations we derive our estimator.
+
+\begin{align*}
+\hat{f}_i (x) := \frac{2\ |s_i| (k_0 x + g (a))}{w(k_0 w + 2 g(a))}.
+\end{align*}
+
+If we divide our interval \(p_i\) into \(n\) equal subintervals
+\(r_{i,j}\) the number of people \(m_{i,j}\) we estimate lie within each
+subinterval will equal:
+
+\begin{align*}
+m_{i,j} &= \int_{a+jw/n}^{a+(j+1)w/n} \hat{f}_i (x) dx\\
+\\
+&= \frac{|s_i|(2 j k_0 w + k_0 w + 2 n\ g(a))}{n^2 (k_0 w + 2\ g(a))}.
+\end{align*}
+
+\hypertarget{error-bounds-2}{%
+\subsubsection{Error Bounds}\label{error-bounds-2}}
+
+We can now ask ourselves what the maximum error bounds are for this
+estimator. In our case. the worst possibility is for the true
+distribution function to be linear over each interval with a slope
+\(\kappa\) that is opposite to ours. Note that, we assume that the
+function is smoothed at the interval transitions to avoid
+discontinuities.
+
+\hypertarget{algorithm-2}{%
+\subsubsection{Algorithm}\label{algorithm-2}}
+
+The \texttt{refineLinear} function presented in Appendix 2 implements
+this method.
+
+\hypertarget{appendix-2-r-code-sample}{%
+\section{Appendix 2: R Code Sample}\label{appendix-2-r-code-sample}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -571,8 +783,7 @@ function specification.
   \KeywordTok{rebase}\NormalTok{ (}
     \ControlFlowTok{function}\NormalTok{ (sizes, rates) \{}
       \ControlFlowTok{if}\NormalTok{ (}\KeywordTok{length}\NormalTok{ (rates) }\OperatorTok{!=}\StringTok{ }\DecValTok{1}\NormalTok{) \{}
-        \KeywordTok{stop}\NormalTok{ (}\StringTok{"Error: the population partition is not a}
-\StringTok{              }\CharTok{\textbackslash{}"}\StringTok{refinement}\CharTok{\textbackslash{}"}\StringTok{ of the rate partition"}\NormalTok{)}
+        \KeywordTok{stop}\NormalTok{ (}\StringTok{"Error: the population partition is not a }\CharTok{\textbackslash{}"}\StringTok{refinement}\CharTok{\textbackslash{}"}\StringTok{ of the rate partition"}\NormalTok{)}
 \NormalTok{      \}}
 \NormalTok{      rates[}\DecValTok{1}\NormalTok{]}\OperatorTok{*}\KeywordTok{sum}\NormalTok{ (sizes)}
 \NormalTok{    \}, ps, rs}
@@ -619,6 +830,59 @@ function specification.
 \NormalTok{  xFreq <-}\StringTok{ }\KeywordTok{getFrequency}\NormalTok{ (ps, xs)}
 \NormalTok{  yFreq <-}\StringTok{ }\KeywordTok{getFrequency}\NormalTok{ (ps, ys)}
   \KeywordTok{getFreqRateRatio}\NormalTok{ (xFreq, yFreq)}
+\NormalTok{\}}
+
+\CommentTok{# Accepts one argumnet:}
+\CommentTok{# @param xs, an annotated partition}
+\CommentTok{# and returns a new annotated partition in which every interval in xs has been}
+\CommentTok{# subdivided into subintervals of width one and the value assigned to those}
+\CommentTok{# intervals has been distributed equally across the subintervals.}
+\CommentTok{# Note: This function skips all unbound intervals.}
+\NormalTok{refineUniform <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (xs) \{}
+\NormalTok{  ys <-}\StringTok{ }\KeywordTok{list}\NormalTok{ ()}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{ (xs)) \{}
+\NormalTok{    x <-}\StringTok{ }\NormalTok{xs[[i]]}
+    \ControlFlowTok{if}\NormalTok{ (x}\OperatorTok{$}\NormalTok{start }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND }\OperatorTok{||}\StringTok{ }\NormalTok{x}\OperatorTok{$}\NormalTok{end }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND) }\ControlFlowTok{next}
+\NormalTok{    w <-}\StringTok{ }\NormalTok{x}\OperatorTok{$}\NormalTok{end }\OperatorTok{-}\StringTok{ }\NormalTok{x}\OperatorTok{$}\NormalTok{start}
+    \ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \DecValTok{0}\OperatorTok{:}\NormalTok{(n }\OperatorTok{-}\StringTok{ }\DecValTok{1}\NormalTok{)) \{}
+\NormalTok{      ys <-}\StringTok{ }\KeywordTok{append}\NormalTok{ (ys,}
+        \KeywordTok{list}\NormalTok{ (}\KeywordTok{interval}\NormalTok{ (}
+          \DataTypeTok{info=}\NormalTok{x}\OperatorTok{$}\NormalTok{info}\OperatorTok{/}\NormalTok{w,}
+          \DataTypeTok{start=}\NormalTok{x}\OperatorTok{$}\NormalTok{start }\OperatorTok{+}\StringTok{ }\NormalTok{j,}
+          \DataTypeTok{end=}\NormalTok{x}\OperatorTok{$}\NormalTok{start }\OperatorTok{+}\StringTok{ }\NormalTok{j }\OperatorTok{+}\StringTok{ }\DecValTok{1}
+\NormalTok{      )))}
+\NormalTok{    \}}
+\NormalTok{  \}}
+\NormalTok{  ys}
+\NormalTok{\}}
+
+\CommentTok{# Accepts one argument:}
+\CommentTok{# @param xs, an annotated partition}
+\CommentTok{# and returns a new annotated partition in which every interval in xs has been}
+\CommentTok{# subdivided into equal subintervals of width one and the value assigned to}
+\CommentTok{# those intervals has been distributed across the subintervals using the}
+\CommentTok{# linear (not the uniform) estimator.}
+\CommentTok{# Note: This function skips all unbound intervals. }
+\NormalTok{refineLinear <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{ (xs) \{}
+\NormalTok{  ys <-}\StringTok{ }\KeywordTok{list}\NormalTok{ ()}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{ (xs)) \{}
+\NormalTok{    x <-}\StringTok{ }\NormalTok{xs[[i]]}
+    \ControlFlowTok{if}\NormalTok{ (x}\OperatorTok{$}\NormalTok{start }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND }\OperatorTok{||}\StringTok{ }\NormalTok{x}\OperatorTok{$}\NormalTok{end }\OperatorTok{==}\StringTok{ }\NormalTok{UNBOUND) }\ControlFlowTok{next}
+\NormalTok{    prevInfo <-}\StringTok{ }\ControlFlowTok{if}\NormalTok{ (i }\OperatorTok{-}\StringTok{ }\DecValTok{1} \OperatorTok{>}\StringTok{ }\DecValTok{0}\NormalTok{) xs[[i }\OperatorTok{-}\StringTok{ }\DecValTok{1}\NormalTok{]]}\OperatorTok{$}\NormalTok{info }\ControlFlowTok{else} \DecValTok{0} 
+\NormalTok{    nextInfo <-}\StringTok{ }\ControlFlowTok{if}\NormalTok{ (i }\OperatorTok{+}\StringTok{ }\DecValTok{1} \OperatorTok{<=}\StringTok{ }\KeywordTok{length}\NormalTok{ (xs)) xs[[i }\OperatorTok{+}\StringTok{ }\DecValTok{1}\NormalTok{]]}\OperatorTok{$}\NormalTok{info }\ControlFlowTok{else} \DecValTok{0}
+\NormalTok{    w <-}\StringTok{ }\NormalTok{x}\OperatorTok{$}\NormalTok{end }\OperatorTok{-}\StringTok{ }\NormalTok{x}\OperatorTok{$}\NormalTok{start}
+\NormalTok{    k <-}\StringTok{ }\NormalTok{(nextInfo }\OperatorTok{-}\StringTok{ }\NormalTok{x}\OperatorTok{$}\NormalTok{info)}\OperatorTok{/}\NormalTok{w}
+    \ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \DecValTok{0}\OperatorTok{:}\NormalTok{(w }\OperatorTok{-}\StringTok{ }\DecValTok{1}\NormalTok{)) \{}
+\NormalTok{      ys <-}\StringTok{ }\KeywordTok{append}\NormalTok{ (ys,}
+        \KeywordTok{list}\NormalTok{ (}\KeywordTok{interval}\NormalTok{ (}
+          \DataTypeTok{info=}\NormalTok{x}\OperatorTok{$}\NormalTok{info}\OperatorTok{*}\NormalTok{(}\DecValTok{2}\OperatorTok{*}\NormalTok{j}\OperatorTok{*}\NormalTok{k}\OperatorTok{*}\NormalTok{w }\OperatorTok{+}\StringTok{ }\NormalTok{k}\OperatorTok{*}\NormalTok{w }\OperatorTok{+}\StringTok{ }\DecValTok{2}\OperatorTok{*}\NormalTok{w}\OperatorTok{*}\NormalTok{prevInfo)}\OperatorTok{/}
+\StringTok{               }\NormalTok{((w}\OperatorTok{^}\DecValTok{2}\NormalTok{)}\OperatorTok{*}\NormalTok{(k}\OperatorTok{*}\NormalTok{w }\OperatorTok{+}\StringTok{ }\DecValTok{2}\OperatorTok{*}\NormalTok{prevInfo)),}
+          \DataTypeTok{start=}\NormalTok{x}\OperatorTok{$}\NormalTok{start }\OperatorTok{+}\StringTok{ }\NormalTok{j,}
+          \DataTypeTok{end=}\NormalTok{x}\OperatorTok{$}\NormalTok{start }\OperatorTok{+}\StringTok{ }\NormalTok{j }\OperatorTok{+}\StringTok{ }\DecValTok{1}
+\NormalTok{      )))}
+\NormalTok{    \}}
+\NormalTok{  \}}
+\NormalTok{  ys}
 \NormalTok{\}}
 
 \CommentTok{# A partition listing the number of Baltimore residents who's ages fall within}
@@ -680,6 +944,20 @@ function specification.
   \KeywordTok{interval}\NormalTok{ (}\FloatTok{0.009849983}\NormalTok{, }\DecValTok{26}\NormalTok{)}
 \NormalTok{)}
 
+\CommentTok{# A partition listing the number of Baltimore residents who's ages fall within}
+\CommentTok{# a contiguous set of age ranges.}
+\NormalTok{populationRefine =}\StringTok{ }\KeywordTok{list}\NormalTok{ (}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{103718}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{14}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{33872}\NormalTok{, }\DecValTok{15}\NormalTok{, }\DecValTok{19}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{37183}\NormalTok{, }\DecValTok{20}\NormalTok{, }\DecValTok{24}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{108161}\NormalTok{, }\DecValTok{25}\NormalTok{, }\DecValTok{34}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{43408}\NormalTok{, }\DecValTok{35}\NormalTok{, }\DecValTok{39}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{34271}\NormalTok{, }\DecValTok{40}\NormalTok{, }\DecValTok{44}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{63696}\NormalTok{, }\DecValTok{45}\NormalTok{, }\DecValTok{54}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{74534}\NormalTok{, }\DecValTok{55}\NormalTok{, }\DecValTok{64}\NormalTok{),}
+  \KeywordTok{interval}\NormalTok{ (}\DecValTok{84314}\NormalTok{, }\DecValTok{65}\NormalTok{)}
+\NormalTok{)}
+
 \CommentTok{# The number of people within certain age ranges who have HIV }
 \NormalTok{hivFreq =}\StringTok{ }\KeywordTok{getFrequency}\NormalTok{ (population, hivRates)}
 
@@ -700,6 +978,18 @@ function specification.
 \NormalTok{gonorrheaHivfreq =}
 \StringTok{  }\KeywordTok{getFreqSum}\NormalTok{ (}\DecValTok{45}\NormalTok{, UNBOUND, gonorrheaFreq)}\OperatorTok{/}
 \StringTok{  }\KeywordTok{getFreqSum}\NormalTok{ (}\DecValTok{45}\NormalTok{, UNBOUND, hivFreq)}
+
+\CommentTok{# Estimates the number of people within the age ranges used to partition}
+\CommentTok{#   populationRefine that have gonorrhea.}
+\CommentTok{# Note: this simulates the dataset that could have been provided for 3.}
+\NormalTok{gonorrheaFreqRefine =}\StringTok{ }\KeywordTok{rebase}\NormalTok{ (}
+  \ControlFlowTok{function}\NormalTok{ (xs, ys) }\KeywordTok{sum}\NormalTok{ (xs),}
+  \KeywordTok{refineLinear}\NormalTok{ (gonorrheaFreq),}
+\NormalTok{  populationRefine) }
+
+\CommentTok{# Estimates the number of people for each age cohort who has gonorrhea.}
+\CommentTok{# Note: this answers question 3.}
+\NormalTok{gonorrheaFreqLinearRefinement =}\StringTok{ }\KeywordTok{refineLinear}\NormalTok{ (gonorrheaFreqRefine)}
 \end{Highlighting}
 \end{Shaded}
 

@@ -157,15 +157,13 @@ getRateRatio <- function (ps, xs, ys) {
   getFreqRateRatio (xFreq, yFreq)
 }
 
-
-# Accepts two argumnets:
-# @param n, an integer
+# Accepts one argumnet:
 # @param xs, an annotated partition
 # and returns a new annotated partition in which every interval in xs has been
-# subdivided into n equal subintervals and the value assigned to those intervals
-# has been distributed equally across the subintervals.
+# subdivided into subintervals of width one and the value assigned to those
+# intervals has been distributed equally across the subintervals.
 # Note: This function skips all unbound intervals.
-refineUniform <- function (n, xs) {
+refineUniform <- function (xs) {
   ys <- list ()
   for (i in 1:length (xs)) {
     x <- xs[[i]]
@@ -174,24 +172,23 @@ refineUniform <- function (n, xs) {
     for (j in 0:(n - 1)) {
       ys <- append (ys,
         list (interval (
-          info=x$info/n,
-          start=x$start + (j*w/n),
-          end=x$start + ((j + 1)*w/n)
+          info=x$info/w,
+          start=x$start + j,
+          end=x$start + j + 1
       )))
     }
   }
   ys
 }
 
-# Accepts two argumnets:
-# @param n, an integer
+# Accepts one argument:
 # @param xs, an annotated partition
 # and returns a new annotated partition in which every interval in xs has been
-# subdivided into n equal subintervals and the value assigned to those intervals
-# has been distributed across the subintervals using the linear (not the
-# uniform) estimator.
+# subdivided into equal subintervals of width one and the value assigned to
+# those intervals has been distributed across the subintervals using the
+# linear (not the uniform) estimator.
 # Note: This function skips all unbound intervals. 
-refineLinear <- function (n, xs) {
+refineLinear <- function (xs) {
   ys <- list ()
   for (i in 1:length (xs)) {
     x <- xs[[i]]
@@ -200,13 +197,13 @@ refineLinear <- function (n, xs) {
     nextInfo <- if (i + 1 <= length (xs)) xs[[i + 1]]$info else 0
     w <- x$end - x$start
     k <- (nextInfo - x$info)/w
-    for (j in 0:(n - 1)) {
+    for (j in 0:(w - 1)) {
       ys <- append (ys,
         list (interval (
-          info=x$info*(2*j*k*w + k*w + 2*n*prevInfo)/
-               ((n^2)*(k*w + 2*prevInfo)),
-          start=x$start + (j*w/n),
-          end=x$start + ((j + 1)*w/n)
+          info=x$info*(2*j*k*w + k*w + 2*w*prevInfo)/
+               ((w^2)*(k*w + 2*prevInfo)),
+          start=x$start + j,
+          end=x$start + j + 1
       )))
     }
   }
@@ -234,20 +231,6 @@ population = list (
   interval (13910, 75, 79),
   interval (8977, 80, 84),
   interval (9073, 85)
-)
-
-# A partition listing the number of Baltimore residents who's ages fall within
-# a contiguous set of age ranges.
-populationRefine = list (
-  interval (103718, 0, 14),
-  interval (33872, 15, 19),
-  interval (37183, 20, 24),
-  interval (108161, 25, 34)
-  interval (43408, 35, 39),
-  interval (34271, 40, 44),
-  interval (63696, 45, 54),
-  interval (74534, 55, 64),
-  interval (84314, 65, UNBOUND)
 )
 
 # A partition listing the rates of HIV amongst Baltimore residents falling
@@ -286,6 +269,20 @@ heroinRates = list (
   interval (0.009849983, 26)
 )
 
+# A partition listing the number of Baltimore residents who's ages fall within
+# a contiguous set of age ranges.
+populationRefine = list (
+  interval (103718, 0, 14),
+  interval (33872, 15, 19),
+  interval (37183, 20, 24),
+  interval (108161, 25, 34),
+  interval (43408, 35, 39),
+  interval (34271, 40, 44),
+  interval (63696, 45, 54),
+  interval (74534, 55, 64),
+  interval (84314, 65)
+)
+
 # The number of people within certain age ranges who have HIV 
 hivFreq = getFrequency (population, hivRates)
 
@@ -306,3 +303,17 @@ gonorrheaHivFreq2544 =
 gonorrheaHivfreq =
   getFreqSum (45, UNBOUND, gonorrheaFreq)/
   getFreqSum (45, UNBOUND, hivFreq)
+
+# Estimates the number of people within the age ranges used to partition
+#   populationRefine that have gonorrhea.
+# Note: this simulates the dataset that could have been provided for 3.
+gonorrheaFreqRefine = rebase (
+  function (xs, ys) sum (xs),
+  refineLinear (gonorrheaFreq),
+  populationRefine) 
+
+# Estimates the number of people for each age cohort who has gonorrhea.
+# Note: this answers question 3.
+gonorrheaFreqLinearRefinement = refineLinear (gonorrheaFreqRefine)
+
+

@@ -3,6 +3,7 @@
 <center>Larry D. Lee Jr.</center>
 
 <center>October 18, 2024</center>
+<center><small>REVISED: November 7, 2024</small></center>
 
 > Abstract: This technical note answers the questions presented in Johns Hopkins School of Public Health's (JHSPH) Coding Challenge. In this note, I review the mathematical theory behind combining datasets that use different stratifications and present code that combines these datasets.
 
@@ -158,6 +159,11 @@ The Interview challenge opens with the following questions:
 > PART 1: Using these four datasets, calculate the following quantities, or if they cannot be calculated exactly, explain why
 > 1. The ratio of gonorrhea rate to HIV diagnosis rate among people ages 25-44, and among people ages 45 or greater, in 2020
 > 2. The ratio of heroin use rate to HIV diagnosis rate among people ages 12 and older in 2020
+>
+> PART 3: We have counts of new gonorrhea diagnoses in age groups: 0-14 years, 15-19 years, 20-24 years, 25-34 years, 35-39 years, 40-44 years, 45-54 years, 55-64 years, and 65+ years old. We want to estimate the count of new gonorrhea diagnoses for each individual age from 0 to 85.
+>
+> Describe an algorithm that will create single-year age estimates of new gonorrhea diagnosis counts. What assumptions does your algorithm make? There are a range of reasonable answers.
+
 
 ## Part 1 Answers
 
@@ -178,6 +184,10 @@ The reason we cannot estimate this datum is because the age partitions used by t
 ## Part 2 Answers
 
 The interview challenge continues by giving a specification for a function that "... takes three datasets as inputs (two with rates per population and one with population) and returns the ratio of these rates by the most granular age brackets possible".  The `getRateRatio` function defined in the code sample given in Appendix 2 implements this function specification.
+
+## Part 3 Answers
+
+In Appendix 1, we describe a range of methods for refining partitions and estimating population distributions across those refinements. Specifically, the functions `refineUniform` and `refineLinear` presented in Appendix 2 implement the algorithms described in Appendix 1. 
 
 # Appendix 1: Incompatible Partitions
 
@@ -205,7 +215,7 @@ $$
 $$
 Many theoretical distribution functions satisfy this requirement. For example, both the normal distribution function and the log-normal distribution functions do.
 
-Given this assumption, we can define concrete error bounds on our interval estimates. Let $p_i$ represent an interval $[a, a + w]$ of width $w$ that contains $|s_i|$ people. Let's consider dividing this interval into $n$ subintervals $r_{i,j}$ and focus on the first subinterval $r_{i,0}$. Then the minimum number of people who could be within $r_{i,0}$ occurs when $f$ is a linear function of slope $\kappa$ and assumes some minimum value $f (a)$ at the start of $r_{i, 0}$. In this instance, the number of people in  $r_{i, 0}$ will equal:
+Given this assumption, we can define concrete bounds on the number of people who can potentially be in our intervals. Let $p_i$ represent an interval $[a, a + w]$ of width $w$ that contains $|s_i|$ people. Let's consider dividing this interval into $n$ subintervals $r_{i,j}$ and focus on the first subinterval $r_{i,0}$. Then the minimum number of people who could be within $r_{i,0}$ occurs when $f$ is a linear function of slope $\kappa$ and assumes some minimum value $f (a)$ at the start of $r_{i, 0}$. In this instance, the number of people in  $r_{i, 0}$ will equal:
 $$
 \begin{align*}
 ||r_{i, 0}|| = \int_a^{a+w/n} f (x)\ dx \ge \int_a^{a+w/n} \kappa\ x + f (a)\ dx = \frac{\kappa\ w^2}{2\ n^2}  + \frac{w}{n}f (a)
@@ -237,6 +247,10 @@ $$
 \end{align*}
 $$
 
+### Algorithm
+
+The `refineUniform` function presented in Appendix 2 implements this method.
+
 ## Linear Estimator
 
 We may be able to do better than uniform estimator however. Consider a partition $p$, where each interval $p_i$ has $s_i$ people in it. Often it is reasonable to assume that increases and decreases from $s_i$ to $s_{i+1}$ reflect changes in the underlying distribution. If so, we can try to reflect these underlying changes by assuming that the distribution across a series of subintervals is not uniform but linearly increasing and decreasing.
@@ -263,14 +277,12 @@ $$
 \lambda = \frac{2\ |s_i|}{w\ (k_0\ w + 2\ g (a))}.
 \end{align*}
 $$
-
 From these considerations we derive our estimator.
 $$
 \begin{align*}
 \hat{f}_i (x) := \frac{2\ |s_i| (k_0 x + g (a))}{w(k_0 w + 2 g(a))}.
 \end{align*}
 $$
-
 If we divide our interval $p_i$ into $n$ equal subintervals $r_{i,j}$ the number of people $m_{i,j}$ we estimate lie within each subinterval will equal:
 $$
 \begin{align*}
@@ -284,12 +296,9 @@ $$
 
 We can now ask ourselves what the maximum error bounds are for this estimator. In our case. the worst possibility is for the true distribution function to be linear over each interval with a slope $\kappa$ that is opposite to ours. Note that, we assume that the function is smoothed at the interval transitions to avoid discontinuities.
 
-## Example
+### Algorithm
 
-> We have counts of new gonorrhea diagnoses in age groups: 0-14 years, 15-19 years, 20-24 years, 25-34 years, 35-39 years, 40-44 years, 45-54 years, 55-64 years, and 65+ years old. We want to estimate the count of new gonorrhea diagnoses for each individual age from 0 to 85.
->
-> Describe an algorithm that will create single-year age estimates of new gonorrhea diagnosis counts. What assumptions does your algorithm make? There are a range of reasonable answers.
-
+The `refineLinear` function presented in Appendix 2 implements this method.
 
 # Appendix 2: R Code Sample
 
@@ -405,8 +414,7 @@ getFrequency <- function (ps, rs) {
   rebase (
     function (sizes, rates) {
       if (length (rates) != 1) {
-        stop ("Error: the population partition is not a
-              \"refinement\" of the rate partition")
+        stop ("Error: the population partition is not a \"refinement\" of the rate partition")
       }
       rates[1]*sum (sizes)
     }, ps, rs
@@ -453,6 +461,59 @@ getRateRatio <- function (ps, xs, ys) {
   xFreq <- getFrequency (ps, xs)
   yFreq <- getFrequency (ps, ys)
   getFreqRateRatio (xFreq, yFreq)
+}
+
+# Accepts one argumnet:
+# @param xs, an annotated partition
+# and returns a new annotated partition in which every interval in xs has been
+# subdivided into subintervals of width one and the value assigned to those
+# intervals has been distributed equally across the subintervals.
+# Note: This function skips all unbound intervals.
+refineUniform <- function (xs) {
+  ys <- list ()
+  for (i in 1:length (xs)) {
+    x <- xs[[i]]
+    if (x$start == UNBOUND || x$end == UNBOUND) next
+    w <- x$end - x$start
+    for (j in 0:(n - 1)) {
+      ys <- append (ys,
+        list (interval (
+          info=x$info/w,
+          start=x$start + j,
+          end=x$start + j + 1
+      )))
+    }
+  }
+  ys
+}
+
+# Accepts one argument:
+# @param xs, an annotated partition
+# and returns a new annotated partition in which every interval in xs has been
+# subdivided into equal subintervals of width one and the value assigned to
+# those intervals has been distributed across the subintervals using the
+# linear (not the uniform) estimator.
+# Note: This function skips all unbound intervals. 
+refineLinear <- function (xs) {
+  ys <- list ()
+  for (i in 1:length (xs)) {
+    x <- xs[[i]]
+    if (x$start == UNBOUND || x$end == UNBOUND) next
+    prevInfo <- if (i - 1 > 0) xs[[i - 1]]$info else 0 
+    nextInfo <- if (i + 1 <= length (xs)) xs[[i + 1]]$info else 0
+    w <- x$end - x$start
+    k <- (nextInfo - x$info)/w
+    for (j in 0:(w - 1)) {
+      ys <- append (ys,
+        list (interval (
+          info=x$info*(2*j*k*w + k*w + 2*w*prevInfo)/
+               ((w^2)*(k*w + 2*prevInfo)),
+          start=x$start + j,
+          end=x$start + j + 1
+      )))
+    }
+  }
+  ys
 }
 
 # A partition listing the number of Baltimore residents who's ages fall within
@@ -514,6 +575,20 @@ heroinRates = list (
   interval (0.009849983, 26)
 )
 
+# A partition listing the number of Baltimore residents who's ages fall within
+# a contiguous set of age ranges.
+populationRefine = list (
+  interval (103718, 0, 14),
+  interval (33872, 15, 19),
+  interval (37183, 20, 24),
+  interval (108161, 25, 34),
+  interval (43408, 35, 39),
+  interval (34271, 40, 44),
+  interval (63696, 45, 54),
+  interval (74534, 55, 64),
+  interval (84314, 65)
+)
+
 # The number of people within certain age ranges who have HIV 
 hivFreq = getFrequency (population, hivRates)
 
@@ -534,6 +609,19 @@ gonorrheaHivFreq2544 =
 gonorrheaHivfreq =
   getFreqSum (45, UNBOUND, gonorrheaFreq)/
   getFreqSum (45, UNBOUND, hivFreq)
+
+# Estimates the number of people within the age ranges used to partition
+#   populationRefine that have gonorrhea.
+# Note: this simulates the dataset that could have been provided for 3.
+gonorrheaFreqRefine = rebase (
+  function (xs, ys) sum (xs),
+  refineLinear (gonorrheaFreq),
+  populationRefine) 
+
+# Estimates the number of people for each age cohort who has gonorrhea.
+# Note: this answers question 3.
+gonorrheaFreqLinearRefinement = refineLinear (gonorrheaFreqRefine)
+
 ```
 
 # Footnotes
